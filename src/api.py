@@ -123,6 +123,9 @@ def simulation_loop():
         # Apply weather effects
         world.apply_weather_effects(all_creatures)
         
+        # Apply structure effects
+        world.apply_structure_effects(all_creatures)
+        
         # Spawn food periodically
         if len(world.food) < 30 and random.random() < 0.1:
             world.spawn_food()

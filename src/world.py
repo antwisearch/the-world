@@ -79,6 +79,39 @@ class Terrain:
             'size': random.uniform(5, 15)
         })
     
+    def apply_structure_effects(self, creatures):
+        """Apply structure effects to creatures"""
+        for creature in creatures:
+            if not creature.alive:
+                continue
+            
+            center = creature.get_center()
+            
+            for struct in self.structures:
+                dx = struct['x'] - center.x
+                dy = struct['y'] - center.y
+                dist = (dx*dx + dy*dy) ** 0.5
+                
+                if dist < struct['size']:
+                    # Inside structure - provide protection/shelter
+                    if struct['type'] == 'shelter':
+                        # Heal slowly
+                        for node in creature.nodes:
+                            node.health = min(100, node.health + 0.2)
+                    elif struct['type'] == 'food':
+                        # Eat
+                        creature.food_eaten += 1
+                        creature.fitness += 50
+                        self.structures.remove(struct)
+                        break
+                    elif struct['type'] == 'wall':
+                        # Push back
+                        push_x = -dx / dist * 0.5
+                        push_y = -dy / dist * 0.5
+                        for node in creature.nodes:
+                            node.position.x += push_x
+                            node.position.y += push_y
+    
     def to_dict(self):
         return {
             'elevation': self.elevation,
