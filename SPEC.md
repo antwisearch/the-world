@@ -263,13 +263,31 @@ world.act(agent_id, {
 })
 ```
 
-## Tech Stack
+## Web Viewer (Spectator Mode)
 
-- **Language**: Python
-- **Physics**: Box2D (modified for soft bodies + terrain)
-- **API**: FastAPI (async for multiple agents)
-- **State**: Redis or in-memory for world state
-- **Rendering**: Optional WebSocket stream for monitoring
+A web-based interface where humans can watch the simulation.
+
+**URLs:**
+- `http://localhost:8080/` - Main page (choose view)
+- `http://localhost:8080/view/ascii` - ASCII view
+- `http://localhost:8080/view/graphical` - Graphical Box2D view
+
+**ASCII View:**
+- Terminal-style display in browser
+- Shows creatures as symbols (🦀🐙🐌⛓️)
+- Shows climate zones, weather, era
+- Real-time updates via WebSocket
+
+**Graphical View:**
+- Box2D physics visualization
+- Color-coded creatures by traits
+- Shows climate zones visually
+- Real-time updates via WebSocket
+
+**Implementation:**
+- FastAPI serves HTML/JS
+- WebSocket for real-time updates
+- Canvas API for graphical rendering in browser
 
 ## File Structure
 

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The World - Spectator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Courier New', monospace; 
+            background: #0a0a0f; 
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .header {
+            background: #1a1a2e;
+            padding: 15px 20px;
+            border-bottom: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title { font-size: 24px; color: #00ff88; }
+        .controls button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .controls button:hover { background: #444; }
+        .controls button.active { background: #00ff88; color: #000; }
+        
+        .view-container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+        
+        /* ASCII View */
+        #ascii-view {
+            flex: 1;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: pre;
+            overflow: auto;
+            background: #0d0d12;
+            color: #00ff88;
+        }
+        
+        /* Graphical View */
+        #graphical-view {
+            flex: 1;
+            display: none;
+            background: #0a0a0f;
+        }
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #12121a;
+            border-left: 2px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .stat { margin-bottom: 15px; }
+        .stat-label { color: #888; font-size: 12px; }
+        .stat-value { font-size: 18px; color: #00ff88; }
+        
+        .legend { margin-top: 20px; }
+        .legend h3 { color: #888; margin-bottom: 10px; }
+        .legend-item { display: flex; align-items: center; margin: 5px 0; }
+        .legend-symbol { width: 24px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">🌍 The World</div>
+        <div class="controls">
+            <button id="btn-ascii" class="active" onclick="setView('ascii')">ASCII</button>
+            <button id="btn-graphical" onclick="setView('graphical')">Graphical</button>
+        </div>
+    </div>
+    
+    <div class="view-container">
+        <div id="ascii-view"></div>
+        <div id="graphical-view">
+            <canvas id="game-canvas"></canvas>
+        </div>
+        <div class="sidebar">
+            <div class="stat">
+                <div class="stat-label">ERA</div>
+                <div class="stat-value" id="era">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">GENERATION</div>
+                <div class="stat-value" id="generation">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">TEMPERATURE</div>
+                <div class="stat-value" id="temperature">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">WEATHER</div>
+                <div class="stat-value" id="weather">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">CREATURES</div>
+                <div class="stat-value" id="creatures">-</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">FOOD</div>
+                <div class="stat-value" id="food">-</div>
+            </div>
+            
+            <div class="legend">
+                <h3>CREATURES</h3>
+                <div class="legend-item"><span class="legend-symbol">🦀</span> Circle</div>
+                <div class="legend-item"><span class="legend-symbol">🐙</span> Star</div>
+                <div class="legend-item"><span class="legend-symbol">🐌</span> Blob</div>
+                <div class="legend-item"><span class="legend-symbol">⛓️</span> Chain</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        
+        let currentView = 'ascii';
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateView(data);
+        };
+        
+        ws.onclose = () => {
+            document.getElementById('ascii-view').textContent = 'Disconnected. Refresh to reconnect.';
+        };
+        
+        function setView(view) {
+            currentView = view;
+            document.getElementById('btn-ascii').className = view === 'ascii' ? 'active' : '';
+            document.getElementById('btn-graphical').className = view === 'graphical' ? 'active' : '';
+            document.getElementById('ascii-view').style.display = view === 'ascii' ? 'block' : 'none';
+            document.getElementById('graphical-view').style.display = view === 'graphical' ? 'block' : 'none';
+        }
+        
+        function updateView(data) {
+            // Update sidebar
+            document.getElementById('era').textContent = data.world?.era || '-';
+            document.getElementById('generation').textContent = data.evolution?.generation || '-';
+            document.getElementById('temperature').textContent = data.world?.global_temp ? `${data.world.global_temp.toFixed(1)}°C` : '-';
+            document.getElementById('weather').textContent = data.world?.weather || '-';
+            document.getElementById('creatures').textContent = `${data.evolution?.alive || 0}/${data.evolution?.population || 0}`;
+            document.getElementById('food').textContent = data.world?.food?.length || 0;
+            
+            // Render current view
+            if (currentView === 'ascii') {
+                renderASCII(data);
+            } else {
+                renderGraphical(data);
+            }
+        }
+        
+        function renderASCII(data) {
+            const W = 80, H = 30;
+            const world = data.world || {};
+            const creatures = data.creatures || [];
+            const food = world.food || [];
+            
+            // Create empty grid
+            let grid = [];
+            for (let y = 0; y < H; y++) {
+                grid[y] = [];
+                for (let x = 0; x < W; x++) {
+                    grid[y][x] = ' ';
+                }
+            }
+            
+            // Helper to place creatures
+            const place = (wx, wy, char) => {
+                const sx = Math.floor(wx / 1200 * W);
+                const sy = Math.floor((800 - wy) / 800 * H);
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                    grid[sy][sx] = char;
+                }
+            };
+            
+            // Place food
+            food.forEach(f => {
+                place(f.x, f.y, '·');
+            });
+            
+            // Place creatures
+            creatures.forEach(c => {
+                if (!c.alive) return;
+                const shape = c.genome?.body?.shape || 'blob';
+                const symbols = { circle: '🦀', star: '🐙', blob: '🐌', chain: '⛓️' };
+                place(c.position?.x || 0, c.position?.y || 0, symbols[shape] || '?');
+            });
+            
+            // Build output
+            let output = '';
+            
+            // Climate zones header
+            const zones = world.climate_zones || [];
+            zones.forEach(z => {
+                output += `🌡️ ${z.name.toUpperCase()} [${z.x_range}] ${z.temperature}°C\n`;
+            });
+            output += '\n';
+            
+            // Grid
+            output += grid.map(row => row.join('')).join('\n');
+            
+            document.getElementById('ascii-view').textContent = output;
+        }
+        
+        function renderGraphical(data) {
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            
+            const W = canvas.width;
+            const H = canvas.height;
+            const scale = W / 1200;
+            
+            // Clear
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, W, H);
+            
+            const world = data.world || {};
+            const creatures = data.creatures || [];
+            const food = world.food || [];
+            
+            // Draw climate zones
+            const zones = world.climate_zones || [];
+            const colors = { scorched: '#4a1a1a', temperate: '#1a3a1a', frozen: '#1a1a4a' };
+            zones.forEach(z => {
+                const x1 = z.x_range[0] * scale;
+                const x2 = z.x_range[1] * scale;
+                ctx.fillStyle = colors[z.name] || '#1a1a1a';
+                ctx.fillRect(x1, 0, x2 - x1, H);
+            });
+            
+            // Draw food
+            ctx.fillStyle = '#00ff88';
+            food.forEach(f => {
+                ctx.beginPath();
+                ctx.arc(f.x * scale, H - f.y * scale, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw creatures
+            creatures.forEach(c => {
+                if (!c.alive) return;
+                
+                const x = (c.position?.x || 0) * scale;
+                const y = H - (c.position?.y || 0) * scale;
+                const radius = (c.genome?.body?.size || 1) * 10 * scale;
+                
+                // Color from genome
+                const color = c.genome?.body?.color || [100, 150, 200];
+                ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw nodes
+                const nodes = c.nodes || [];
+                ctx.fillStyle = '#fff';
+                nodes.forEach(n => {
+                    ctx.beginPath();
+                    ctx.arc(n.x * scale, H - n.y * scale, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+        }
+        
+        // Handle resize
+        window.onresize = () => {
+            if (currentView === 'graphical') {
+                renderGraphical(lastData);
+            }
+        };
+        
+        let lastData = null;
+        const originalUpdate = updateView;
+        updateView = (data) => {
+            lastData = data;
+            originalUpdate(data);
+        };
+    </script>
+</body>
+</html>

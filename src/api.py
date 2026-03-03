@@ -2,21 +2,27 @@
 The World API - FastAPI server for AI agents
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uvicorn
 import threading
 import time
+import json
 
 # Import our modules
 from src.world import World
 from src.creature import Creature
 from src.evolution import EvolutionEngine
+from src.websocket import spectator_manager
 
 # Create FastAPI app
 app = FastAPI(title="The World", description="AI Agent Evolution Simulator")
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 # Global state
 world = None
@@ -78,6 +84,8 @@ def init_world():
 def simulation_loop():
     global world, evolution
     
+    import asyncio
+    
     while True:
         # Update world
         agent_list = list(agents.values())
@@ -86,6 +94,7 @@ def simulation_loop():
         # Update evolution
         evolution.update(1/60)
         
+        # Broadcast to spectators (simplified - actual broadcast done in async context)
         time.sleep(1/60)
 
 
@@ -323,6 +332,38 @@ class Food:
         self.radius = 0.3
         self.nutrition = 20
         self.alive = True
+
+
+# WebSocket endpoint for spectators
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for spectators"""
+    await websocket.accept()
+    spectator_manager.spectators.append(websocket)
+    print(f"👀 Spectator connected. Total: {len(spectator_manager.spectators)}")
+    try:
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
+                # Handle commands from spectator if needed
+            except asyncio.TimeoutError:
+                pass
+    except Exception:
+        pass
+    if websocket in spectator_manager.spectators:
+        spectator_manager.spectators.remove(websocket)
+    print(f"👀 Spectator disconnected. Total: {len(spectator_manager.spectators)}")
+
+
+# Serve viewer
+@app.get("/")
+async def serve_viewer():
+    return FileResponse("src/static/viewer.html")
+
+
+@app.get("/viewer")
+async def serve_viewer2():
+    return FileResponse("src/static/viewer.html")
 
 
 # Need to import b2Vec2
