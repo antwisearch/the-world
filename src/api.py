@@ -28,6 +28,8 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 world = None
 evolution = None
 agents = {}  # agent_id -> creature
+agent_last_active = {}  # agent_id -> last active timestamp
+SLEEP_TIMEOUT = 30  # seconds before creature sleeps
 
 
 # Pydantic models for API
@@ -92,9 +94,43 @@ def simulation_loop():
     global world, evolution
     
     while True:
+        current_time = time.time()
+        
+        # Check for sleeping agents
+        for agent_id, creature in list(agents.items()):
+            if not creature.alive:
+                continue
+            
+            last_active = agent_last_active.get(agent_id, 0)
+            inactive_time = current_time - last_active
+            
+            if inactive_time > SLEEP_TIMEOUT:
+                creature.sleeping = True
+            else:
+                creature.sleeping = False
+        
         # Update world
-        agent_list = list(agents.values())
+        agent_list = [c for c in agents.values() if c.alive and not getattr(c, 'sleeping', False)]
         world.update(agent_list, 1/60)
+        
+        # Update evolution (only non-sleeping creatures)
+        for creature in evolution.creatures:
+            if creature in agents.values() and getattr(creature, 'sleeping', False):
+                continue
+            if creature.alive:
+                # Get world state at creature position
+                center = creature.get_center()
+                zone = world.get_zone_at(center.x)
+                temp = world.get_temperature_at(center.x, center.y)
+                world_state = {
+                    'era': world.era,
+                    'climate': zone.name,
+                    'temperature': temp,
+                    'weather': world.get_weather_at(center.x, center.y),
+                    'global_temp': world.global_temp,
+                    'terrain': {'structures': world.terrain.structures}
+                }
+                creature.update(1/60, world_state)
         
         # Update evolution
         evolution.update(1/60)
@@ -288,6 +324,10 @@ async def agent_act(agent_id: str, action: ActRequest):
     
     if not creature.alive:
         return {'error': 'Creature dead'}
+    
+    # Update last active time
+    agent_last_active[agent_id] = time.time()
+    creature.sleeping = False
     
     # Apply movement
     creature.apply_input(action.thrust, action.contract)

@@ -29,6 +29,7 @@
 
 ### Priority 1 - Essential
 - [ ] Fix WebSocket broadcasting (currently testing)
+- [x] Agent sleep mode when offline
 - [ ] Add creature eating food
 - [ ] Add creature collision
 - [ ] Save/load simulation state
