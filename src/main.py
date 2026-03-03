@@ -22,7 +22,7 @@ def main():
         from src.evolution import EvolutionEngine
         import time
         
-        print("🌍 Initializing The World...")
+        print("[*] Initializing The World...")
         world = World()
         evolution = EvolutionEngine(world, args.population, args.generation_time)
         evolution.spawn_initial_population()
@@ -37,11 +37,11 @@ def main():
                 evolution.update(1/60)
                 time.sleep(1/60)
         except KeyboardInterrupt:
-            print("\n👋 World stopped")
+            print("\n[*] World stopped")
     else:
         # Run API server
         from src.api import run_server
-        print(f"🌐 Starting API server on port {args.port}")
+        print(f"[*] Starting API server on port {args.port}")
         run_server(port=args.port)
 
 

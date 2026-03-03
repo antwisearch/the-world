@@ -18,14 +18,14 @@ class SpectatorManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.spectators.append(websocket)
-        print(f"👀 Spectator connected. Total: {len(self.spectators)}")
+        print(f"[+] Spectator connected. Total: {len(self.spectators)}")
     
     def disconnect(self, websocket: WebSocket):
         if websocket in self.spectators:
             self.spectators.remove(websocket)
-        print(f"👀 Spectator disconnected. Total: {len(self.spectators)}")
+        print(f"[-] Spectator disconnected. Total: {len(self.spectators)}")
     
-    async def broadcast(self, data: dict):
+    async def broadcast(self, data):
         """Send state to all spectators"""
         if not self.spectators:
             return
@@ -34,7 +34,10 @@ class SpectatorManager:
         dead = []
         for ws in self.spectators:
             try:
-                await ws.send_json(data)
+                if isinstance(data, str):
+                    await ws.send_text(data)
+                else:
+                    await ws.send_json(data)
             except:
                 dead.append(ws)
         

@@ -76,25 +76,24 @@ class PerceiveResponse(BaseModel):
 
 # Initialize world
 def init_world():
-    global world, evolution
+    global world, evolution, phys_world
     
     world = World(width=1200, height=800)
+    from src.environment import World as PhysWorld
+    phys_world = PhysWorld(width=1200, height=800)
     evolution = EvolutionEngine(world, population_size=20, generation_time=30)
+    # Give evolution engine access to phys_world
+    evolution.phys_world = phys_world
     evolution.spawn_initial_population(20)
     
-    return world, evolution
+    return world, evolution, phys_world
 
 
 import asyncio
-from collections import deque
 
-# Queue for passing state from thread to async
-state_queue = deque(maxlen=1)
-
-
-# Background simulation thread
-def simulation_loop():
-    global world, evolution
+# Background simulation loop
+async def simulation_loop():
+    global world, evolution, phys_world
     
     while True:
         current_time = time.time()
@@ -116,8 +115,15 @@ def simulation_loop():
         agent_list = [c for c in agents.values() if c.alive and not getattr(c, 'sleeping', False)]
         world.update(agent_list, 1/60)
         
+        # Step Physics engine
+        phys_world.step(1/60)
+        
         # Check collisions (eating food, creature-creature)
+        # Re-syncing food with physics world food
+        world.food = [{'x': f.position.x, 'y': f.position.y, 'radius': f.radius, 'nutrition': f.nutrition} 
+                      for f in phys_world.food if f.alive]
         all_creatures = [c for c in evolution.creatures if c.alive]
+        
         world.check_collisions(all_creatures)
         
         # Apply weather effects
@@ -152,7 +158,7 @@ def simulation_loop():
         # Update evolution
         evolution.update(1/60)
         
-        # Queue state for broadcast
+        # Broadcast state
         import json
         state = {
             'world': world.to_dict(),
@@ -174,25 +180,24 @@ def simulation_loop():
         }
         
         try:
-            state_queue.append(json.dumps(state, default=str))
-        except:
+            await spectator_manager.broadcast(json.dumps(state, default=str))
+        except Exception:
             pass
         
-        time.sleep(1/60)
+        await asyncio.sleep(1/60)
 
 
 @app.on_event("startup")
 async def startup_event():
     """Start simulation on startup"""
-    global world, evolution
+    global world, evolution, phys_world
     
-    world, evolution = init_world()
+    world, evolution, phys_world = init_world()
     
     # Start simulation in background
-    sim_thread = threading.Thread(target=simulation_loop, daemon=True)
-    sim_thread.start()
+    asyncio.create_task(simulation_loop())
     
-    print("🌍 The World simulation started")
+    print("[*] The World simulation started")
 
 
 # API Endpoints
@@ -422,31 +427,12 @@ class Food:
 
 
 # WebSocket endpoint for spectators
+from src.websocket import websocket_endpoint as ws_endpoint
+
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_route(websocket: WebSocket):
     """WebSocket endpoint for spectators"""
-    await websocket.accept()
-    spectator_manager.spectators.append(websocket)
-    print(f"👀 Spectator connected. Total: {len(spectator_manager.spectators)}")
-    try:
-        while True:
-            try:
-                data = await asyncio.wait_for(websocket.receive_text(), timeout=0.1)
-            except asyncio.TimeoutError:
-                pass
-            
-            # Check for new state in queue
-            if state_queue:
-                state = state_queue.popleft()
-                try:
-                    await websocket.send_text(state)
-                except:
-                    break
-    except Exception:
-        pass
-    if websocket in spectator_manager.spectators:
-        spectator_manager.spectators.remove(websocket)
-    print(f"👀 Spectator disconnected. Total: {len(spectator_manager.spectators)}")
+    await ws_endpoint(websocket)
 
 
 # Serve viewer

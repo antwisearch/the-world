@@ -4,20 +4,55 @@ Creature - Soft body with full genome for co-evolution
 
 import random
 import math
+import Box2D as box2d
 from Box2D import b2Vec2
 
 
 class Node:
     """A single node in a soft body creature"""
     
-    def __init__(self, x, y, mass=1.0, radius=0.3):
-        self.position = b2Vec2(x, y)
-        self.velocity = b2Vec2(0, 0)
+    def __init__(self, x, y, phys_world, mass=1.0, radius=0.3):
+        self.phys_world = phys_world
+        
+        # Create Box2D body
+        body_def = box2d.b2BodyDef(
+            type=box2d.b2_dynamicBody,
+            position=b2Vec2(x, y),
+            linearDamping=0.5,
+            angularDamping=0.5
+        )
+        self.body = self.phys_world.world.CreateBody(body_def)
+        
+        # Create Fixture
+        fixture_def = box2d.b2FixtureDef(
+            shape=box2d.b2CircleShape(radius=radius),
+            density=mass / (math.pi * radius * radius),
+            friction=0.3,
+            restitution=0.2
+        )
+        self.body.CreateFixture(fixture_def)
+        
+        # Properties
         self.mass = mass
         self.radius = radius
-        self.force = b2Vec2(0, 0)
         self.health = 100.0
         self.age = 0
+    
+    @property
+    def position(self):
+        return self.body.position
+    
+    @position.setter
+    def position(self, value):
+        self.body.position = value
+        
+    @property
+    def velocity(self):
+        return self.body.linearVelocity
+        
+    @velocity.setter
+    def velocity(self, value):
+        self.body.linearVelocity = value
 
 
 class Spring:
@@ -37,7 +72,8 @@ class Creature:
     Soft-body creature with full genome for world-guided evolution
     """
     
-    def __init__(self, x, y, genome=None):
+    def __init__(self, x, y, phys_world=None, genome=None):
+        self.phys_world = phys_world
         self.nodes = []
         self.springs = []
         self.age = 0
@@ -53,7 +89,8 @@ class Creature:
             self.genome = genome.copy()
         
         # Build body from genome
-        self.build_body(x, y)
+        if self.phys_world:
+            self.build_body(x, y)
     
     def random_genome(self):
         """Generate random genome with all traits"""
@@ -105,24 +142,24 @@ class Creature:
                 angle = (2 * math.pi * i) / num_nodes
                 nx = x + radius * 2 * math.cos(angle)
                 ny = y + radius * 2 * math.sin(angle)
-                node = Node(nx, ny, body.get('mass', 1.0), radius)
+                node = Node(nx, ny, self.phys_world, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
         elif shape == 'star':
-            center = Node(x, y, body.get('mass', 1.0), radius * 1.5)
+            center = Node(x, y, self.phys_world, body.get('mass', 1.0), radius * 1.5)
             self.nodes.append(center)
             for i in range(num_nodes - 1):
                 angle = (2 * math.pi * i) / (num_nodes - 1)
                 nx = x + radius * 3 * math.cos(angle)
                 ny = y + radius * 3 * math.sin(angle)
-                node = Node(nx, ny, body.get('mass', 1.0) * 0.7, radius * 0.7)
+                node = Node(nx, ny, self.phys_world, body.get('mass', 1.0) * 0.7, radius * 0.7)
                 self.nodes.append(node)
         
         elif shape == 'chain':
             for i in range(num_nodes):
                 nx = x + i * radius * 1.5 - (num_nodes * radius * 1.5 / 2)
                 ny = y
-                node = Node(nx, ny, body.get('mass', 1.0), radius)
+                node = Node(nx, ny, self.phys_world, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
         else:  # blob
@@ -131,7 +168,7 @@ class Creature:
                 dist = random.uniform(0, radius * 2)
                 nx = x + dist * math.cos(angle)
                 ny = y + dist * math.sin(angle)
-                node = Node(nx, ny, body.get('mass', 1.0), radius)
+                node = Node(nx, ny, self.phys_world, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
         # Create springs based on flexibility
@@ -184,22 +221,24 @@ class Creature:
             relative_velocity = vel_b - vel_a
             damping_force = relative_velocity * spring.damping
             
-            # Apply forces
+            # Apply forces directly to Box2D bodies
             direction = delta / distance
             force = direction * force_magnitude + damping_force
             
-            spring.node_a.force += force
-            spring.node_b.force -= force
+            spring.node_a.body.ApplyForceToCenter(force, wake=True)
+            spring.node_b.body.ApplyForceToCenter(-force, wake=True)
     
     def apply_input(self, thrust_direction, contraction=0.0):
         """Apply user/thrust input to move creature"""
         speed = self.genome['physiology']['speed']
         
+        force = b2Vec2(
+            thrust_direction[0], 
+            thrust_direction[1]
+        ) * speed * 200
+        
         for node in self.nodes:
-            node.velocity += b2Vec2(
-                thrust_direction[0], 
-                thrust_direction[1]
-            ) * speed * 5
+            node.body.ApplyForceToCenter(force, wake=True)
             
             # Apply contraction
             if contraction > 0:
@@ -207,7 +246,8 @@ class Creature:
                 to_center = center - node.position
                 dist = to_center.length
                 if dist > 0.1:
-                    node.velocity += (to_center / dist) * contraction * 3
+                    contract_force = (to_center / dist) * contraction * 100
+                    node.body.ApplyForceToCenter(contract_force, wake=True)
     
     def get_center(self):
         """Get center of mass"""
@@ -242,17 +282,6 @@ class Creature:
         # Apply internal forces
         self.apply_forces()
         
-        # Physics update (Euler integration)
-        gravity = b2Vec2(0, -10)
-        for node in self.nodes:
-            node.velocity += gravity * dt
-            node.velocity += node.force / node.mass * dt
-            node.position += node.velocity * dt
-            node.force = b2Vec2(0, 0)
-            
-            # Damping
-            node.velocity *= 0.98
-        
         # Metabolism - health decreases based on rate
         metabolism = self.genome['physiology']['metabolism']
         health_loss = dt * 0.5 * metabolism * len(self.nodes)
@@ -272,9 +301,21 @@ class Creature:
             node.health -= health_loss
         
         # Check death
+        if not self.nodes:
+            self.die()
+            return
+
         avg_health = sum(n.health for n in self.nodes) / len(self.nodes)
         if avg_health <= 0:
-            self.alive = False
+            self.die()
+    
+    def die(self):
+        """Handle death and clean up physics bodies"""
+        self.alive = False
+        for node in self.nodes:
+            if node.body:
+                self.phys_world.world.DestroyBody(node.body)
+                node.body = None
     
     def calculate_adaptation_bonus(self, world_state) -> float:
         """Calculate fitness bonus based on adaptation to world state"""
@@ -384,4 +425,4 @@ class Creature:
     
     def clone(self):
         """Create exact copy"""
-        return Creature(self.get_center().x, self.get_center().y, self.genome.copy())
+        return Creature(self.get_center().x, self.get_center().y, self.phys_world, self.genome.copy())

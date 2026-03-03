@@ -206,25 +206,25 @@ class World:
         if self.era == 'primordial':
             if fires > 50:
                 self.era = 'age_of_fire'
-                print(f"\n🌍 ERA CHANGE: PRIMORDIAL → AGE OF FIRE")
+                print(f"\n[ERA CHANGE]: PRIMORDIAL → AGE OF FIRE")
         
         elif self.era == 'age_of_fire':
             if fires > 200:
                 self.era = 'collapse'
-                print(f"\n🌍 ERA CHANGE: AGE OF FIRE → COLLAPSE")
+                print(f"\n[ERA CHANGE]: AGE OF FIRE → COLLAPSE")
             elif self.global_temp < 5:
                 self.era = 'ice_age'
-                print(f"\n🌍 ERA CHANGE: AGE OF FIRE → ICE AGE")
+                print(f"\n[ERA CHANGE]: AGE OF FIRE → ICE AGE")
         
         elif self.era == 'ice_age':
             if self.global_temp > 10:
                 self.era = 'primordial'
-                print(f"\n🌍 ERA CHANGE: ICE AGE → PRIMORDIAL")
+                print(f"\n[ERA CHANGE]: ICE AGE → PRIMORDIAL")
         
         elif self.era == 'urban':
             if fires > 150:
                 self.era = 'collapse'
-                print(f"\n🌍 ERA CHANGE: URBAN → COLLAPSE")
+                print(f"\n[ERA CHANGE]: URBAN → COLLAPSE")
     
     def apply_weather_effects(self, creatures):
         """Apply weather effects to creatures"""

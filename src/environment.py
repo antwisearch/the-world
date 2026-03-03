@@ -3,9 +3,7 @@ Physics environment using Box2D
 """
 
 import Box2D as box2d
-from Box2D import (b2Vec2, b2AABB, b2CircleShape, b2PolygonShape,
-                   b2BodyDef, b2DynamicBody, b2StaticBody, b2FixtureDef,
-                   b2Circle, b2Polygon)
+from Box2D import b2Vec2
 import random
 
 
@@ -48,20 +46,20 @@ class World:
         wall_thickness = 1.0
         
         # Ground
-        ground = self.world.CreateBody(b2BodyDef(position=b2Vec2(self.width/2, -wall_thickness/2)))
-        ground.CreateFixture(b2PolygonShape(box=b2Vec2(self.width/2, wall_thickness/2)), friction=0.5)
+        ground = self.world.CreateBody(box2d.b2BodyDef(position=b2Vec2(self.width/2, -wall_thickness/2)))
+        ground.CreateFixture(shape=box2d.b2PolygonShape(box=b2Vec2(self.width/2, wall_thickness/2)), friction=0.5)
         
         # Left wall
-        left = self.world.CreateBody(b2BodyDef(position=b2Vec2(-wall_thickness/2, self.height/2)))
-        left.CreateFixture(b2PolygonShape(box=b2Vec2(wall_thickness/2, self.height/2)), friction=0.5)
+        left = self.world.CreateBody(box2d.b2BodyDef(position=b2Vec2(-wall_thickness/2, self.height/2)))
+        left.CreateFixture(shape=box2d.b2PolygonShape(box=b2Vec2(wall_thickness/2, self.height/2)), friction=0.5)
         
         # Right wall
-        right = self.world.CreateBody(b2BodyDef(position=b2Vec2(self.width + wall_thickness/2, self.height/2)))
-        right.CreateFixture(b2PolygonShape(box=b2Vec2(wall_thickness/2, self.height/2)), friction=0.5)
+        right = self.world.CreateBody(box2d.b2BodyDef(position=b2Vec2(self.width + wall_thickness/2, self.height/2)))
+        right.CreateFixture(shape=box2d.b2PolygonShape(box=b2Vec2(wall_thickness/2, self.height/2)), friction=0.5)
         
         # Ceiling
-        ceiling = self.world.CreateBody(b2BodyDef(position=b2Vec2(self.width/2, self.height + wall_thickness/2)))
-        ceiling.CreateFixture(b2PolygonShape(box=b2Vec2(self.width/2, wall_thickness/2)), friction=0.5)
+        ceiling = self.world.CreateBody(box2d.b2BodyDef(position=b2Vec2(self.width/2, self.height + wall_thickness/2)))
+        ceiling.CreateFixture(shape=box2d.b2PolygonShape(box=b2Vec2(self.width/2, wall_thickness/2)), friction=0.5)
     
     def spawn_food(self):
         """Spawn food at random position"""
@@ -85,7 +83,7 @@ class World:
             if not creature.alive:
                 continue
             
-            # Check food collision
+            # Check food collision (sensor style)
             for food in self.food:
                 if not food.alive:
                     continue
@@ -100,41 +98,15 @@ class World:
                         # Restore some health
                         for n in creature.nodes:
                             n.health = min(100, n.health + food.nutrition)
-            
-            # Check creature collision
-            for other in self.creatures:
-                if other == creature or not other.alive:
-                    continue
-                
-                # Simple collision - push apart
-                center_a = creature.get_center()
-                center_b = other.get_center()
-                delta = center_a - center_b
-                dist = delta.length
-                min_dist = creature.get_radius() + other.get_radius()
-                
-                if dist < min_dist and dist > 0.1:
-                    # Push apart
-                    overlap = min_dist - dist
-                    push = (delta / dist if dist > 0 else box2d.b2Vec2(1,0)) * overlap * 0.5
-                    for node in creature.nodes:
-                        node.position += push
-                    for node in other.nodes:
-                        node.position -= push
     
     def step(self, dt=1/60):
         """Step the physics simulation"""
-        # Update creatures
+        # Update creatures (apply metabolism and forces)
         for creature in self.creatures:
             if creature.alive:
                 creature.update(dt)
-                
-                # Keep in bounds
-                for node in creature.nodes:
-                    node.position.x = max(1, min(self.width - 1, node.position.x))
-                    node.position.y = max(1, min(self.height - 1, node.position.y))
         
-        # Check collisions
+        # Check environment logic (food)
         self.check_collisions()
         
         # Remove dead food

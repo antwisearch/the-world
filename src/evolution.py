@@ -103,7 +103,7 @@ class EvolutionEngine:
     def end_generation(self):
         """End generation, select survivors, reproduce"""
         print(f"\n{'='*50}")
-        print(f"🌍 GENERATION {self.generation} - ERA: {self.world.era.upper()}")
+        print(f"[WORLD] GENERATION {self.generation} - ERA: {self.world.era.upper()}")
         print(f"{'='*50}")
         
         # Get surviving creatures
