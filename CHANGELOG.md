@@ -35,10 +35,10 @@
 - [ ] Fix creatures dying too fast
 
 ### Priority 2 - Features
-- [ ] Save/load simulation state
-- [ ] Agent communication
-- [ ] Structure building (agents can modify terrain)
-- [ ] Weather events (rain, drought, fire, flood)
+- [x] Save/load simulation state
+- [x] Agent communication
+- [x] Weather events (rain, drought, fire, flood)
+- [x] Structure building (agents can modify terrain)
 
 ### Priority 3 - Polish
 - [ ] Better graphical rendering
