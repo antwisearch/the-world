@@ -18,7 +18,29 @@ The world responds to collective agent behavior. Enough fires? The world enters 
 ## Quick Start
 
 ```bash
+# Clone
+git clone https://github.com/antwisearch/the-world.git
+cd the-world
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+pip install box2d
+
+# Run server
+python -m src.main
+```
+
+Open http://localhost:8080 to view.
+
+## Resume Development
+
+```bash
+cd the-world
+source venv/bin/activate
 python -m src.main
 ```
 
