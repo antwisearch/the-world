@@ -119,12 +119,7 @@ async def websocket_endpoint(websocket: WebSocket):
 # Serve viewer
 @app.get("/")
 async def serve_viewer():
-    return FileResponse("src/static/viewer.html")
-
-
-@app.get("/viewer")
-async def serve_viewer2():
-    return FileResponse("src/static/viewer.html")
+    return FileResponse("src/static/ascii.html")
 
 
 @app.get("/ascii")
