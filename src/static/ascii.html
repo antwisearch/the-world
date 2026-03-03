@@ -3,71 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The World - ASCII</title>
+    <title>The World - Dwarf Fortress Style</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             background: #000; 
             color: #ccc;
             font-family: 'Courier New', monospace;
-            padding: 20px;
+            padding: 10px;
+            font-size: 14px;
         }
-        #ascii {
-            white-space: pre;
-            font-size: 12px;
-            line-height: 12px;
+        #game {
             background: #0a0a0a;
             padding: 10px;
             border: 1px solid #333;
+            display: inline-block;
         }
         .header {
-            background: #1a1a1a;
-            padding: 10px 20px;
-            border-bottom: 2px solid #333;
-            display: flex;
-            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
         }
-        .title { font-size: 18px; color: #ffaa00; }
+        .title { color: #ffaa00; font-size: 20px; }
+        .subtitle { color: #666; font-size: 12px; }
+        .main { display: flex; gap: 20px; }
         .sidebar {
-            width: 300px;
-            background: #111;
-            border-left: 2px solid #333;
-            padding: 10px;
-            font-size: 11px;
+            width: 250px;
+            vertical-align: top;
         }
-        .main { display: flex; height: calc(100vh - 60px); }
         .stat-box {
-            background: #1a1a1a;
+            background: #111;
             padding: 8px;
             margin-bottom: 8px;
             border: 1px solid #333;
         }
         .stat-label { color: #666; font-size: 10px; }
-        .stat-value { color: #ffaa00; }
+        .stat-value { color: #ccc; }
+        .events {
+            height: 300px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        .event { color: #555; margin: 2px 0; }
+        .event.birth { color: #0f0; }
+        .event.death { color: #f00; }
+        .event.build { color: #0ff; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">⛏️ The World - Dwarf Fortress ASCII</div>
+        <span class="title">⛏️ THE WORLD</span>
+        <span class="subtitle"> - A Dwarf Fortress Style Colony Simulation</span>
     </div>
     <div class="main">
-        <div id="ascii"></div>
+        <div id="game"></div>
         <div class="sidebar">
             <div class="stat-box">
-                <div class="stat-label">POPULATION</div>
-                <div class="stat-value" id="population">0</div>
+                <div class="stat-label">Population</div>
+                <div class="stat-value" id="pop">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">GENERATION</div>
-                <div class="stat-value" id="generation">1</div>
+                <div class="stat-label">Generation</div>
+                <div class="stat-value" id="gen">1</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">HAPPINESS</div>
-                <div class="stat-value" id="happiness">0</div>
+                <div class="stat-label">Avg Happiness</div>
+                <div class="stat-value" id="hap">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">EVENTS</div>
-                <div id="events"></div>
+                <div class="stat-label">Jobs Done</div>
+                <div class="stat-value" id="jobs">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Workers</div>
+                <div class="stat-value" id="workers"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Event Log</div>
+                <div class="events" id="events"></div>
             </div>
         </div>
     </div>
@@ -77,120 +90,115 @@
         
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            updateDisplay(data);
+            update(data);
         };
         
-        function updateDisplay(data) {
+        function update(data) {
             const civ = data.civilization || {};
             const world = data.world || {};
             const agents = data.agents || [];
             
             // Stats
-            document.getElementById('population').textContent = civ.population || 0;
-            document.getElementById('generation').textContent = civ.generation || 1;
-            document.getElementById('happiness').textContent = (civ.avg_happiness || 0).toFixed(1);
+            document.getElementById('pop').textContent = civ.population || 0;
+            document.getElementById('gen').textContent = civ.generation || 1;
+            document.getElementById('hap').textContent = (civ.avg_happiness || 0).toFixed(1);
+            document.getElementById('jobs').textContent = civ.total_jobs_done || 0;
+            
+            // Workers
+            const jobs = civ.jobs || {};
+            document.getElementById('workers').textContent = Object.entries(jobs).map(([j,c]) => j[0].toUpperCase()+':'+c).join(' ') || 'none';
             
             // Events
             const events = world.events || [];
-            let eventsHtml = events.slice(-5).map(e => 
-                `<div style="color:#666;margin:2px 0;">${e.message}</div>`
-            ).join('');
+            let eventsHtml = events.slice(-15).reverse().map(e => {
+                let cls = 'event';
+                if (e.message.includes('Born') || e.message.includes('arrival')) cls += ' birth';
+                else if (e.message.includes('died')) cls += ' death';
+                else if (e.message.includes('built')) cls += ' build';
+                return `<div class="${cls}">${e.message}</div>`;
+            }).join('');
             document.getElementById('events').innerHTML = eventsHtml;
             
-            // Render ASCII
-            renderASCII(data);
+            render(data);
         }
         
-        function renderASCII(data) {
-            const W = 80, H = 40;
+        function render(data) {
+            const W = 80, H = 25;
             const world = data.world || {};
             const agents = data.agents || [];
             const resources = world.resources || [];
             const buildings = world.buildings || [];
             const water = world.water_sources || [];
             
-            // Create grid
-            let grid = [];
+            // Grid
+            let g = [];
             for (let y = 0; y < H; y++) {
-                grid[y] = [];
-                for (let x = 0; x < W; x++) {
-                    grid[y][x] = '.';
-                }
+                g[y] = Array(W).fill('.');
             }
             
-            // Helper: world to screen
-            const wx = (wx) => Math.floor(wx / 1200 * W);
-            const wy = (wy) => Math.floor((800 - wy) / 800 * H);
+            const wx = x => Math.floor(x / 1200 * W);
+            const wy = y => Math.floor((800 - y) / 800 * H);
             
-            // Draw water
+            // Terrain
             water.forEach(w => {
-                for (let dy = -3; dy <= 3; dy++) {
-                    for (let dx = -5; dx <= 5; dx++) {
+                for (let dy = -4; dy <= 4; dy++) {
+                    for (let dx = -8; dx <= 8; dx++) {
                         const sx = wx(w.x) + dx;
                         const sy = wy(w.y) + dy;
                         if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                            grid[sy][sx] = '~';
+                            if (dx*dx + dy*dy < 20) g[sy][sx] = '~';
                         }
                     }
                 }
             });
             
-            // Draw resources
+            // Resources
             resources.forEach(r => {
                 const sx = wx(r.x);
                 const sy = wy(r.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    const symbols = { food: '*', wood: 'T', stone: 'O', ore: '#' };
-                    grid[sy][sx] = symbols[r.type] || '.';
+                    g[sy][sx] = r.type === 'food' ? '*' : 
+                                 r.type === 'wood' ? 'T' : 
+                                 r.type === 'stone' ? 'O' : '#';
                 }
             });
             
-            // Draw buildings
+            // Buildings  
             buildings.forEach(b => {
                 const sx = wx(b.x);
                 const sy = wy(b.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    const symbols = { shelter: 'H', farm: 'F', workshop: 'W' };
-                    grid[sy][sx] = symbols[b.type] || 'B';
+                    g[sy][sx] = b.type === 'shelter' ? '█' : 
+                                 b.type === 'farm' ? '░' : 
+                                 b.type === 'workshop' ? '▤' : '?';
                 }
             });
             
-            // Draw agents
+            // Agents
             agents.forEach(a => {
                 const sx = wx(a.position.x);
                 const sy = wy(a.position.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    // Color by job
-                    const jobChars = { 
-                        gatherer: 'g', builder: 'b', hunter: 'h', 
-                        farmer: 'f', trader: 't', guard: 'G' 
-                    };
-                    grid[sy][sx] = jobChars[a.job] || '@';
+                    g[sy][sx] = a.job === 'hunter' ? 'h' :
+                                 a.job === 'builder' ? 'b' :
+                                 a.job === 'farmer' ? 'f' :
+                                 a.job === 'trader' ? 't' :
+                                 a.job === 'guard' ? 'G' : '@';
                 }
             });
             
-            // Build string
-            let output = '';
-            
-            // Top bar - climate zones
-            output += '┌' + '─'.repeat(W) + '┐\n';
-            
+            // Border
+            let out = '┌' + '─'.repeat(W) + '┐\n';
             for (let y = 0; y < H; y++) {
-                output += '│';
-                for (let x = 0; x < W; x++) {
-                    output += grid[y][x];
-                }
-                output += '│\n';
+                out += '│' + g[y].join('') + '│\n';
             }
+            out += '└' + '─'.repeat(W) + '┘';
             
-            // Bottom bar
-            output += '└' + '─'.repeat(W) + '┘';
-            
-            document.getElementById('ascii').textContent = output;
+            document.getElementById('game').textContent = out;
         }
         
         ws.onclose = () => {
-            document.getElementById('ascii').textContent = 'DISCONNECTED';
+            document.getElementById('game').textContent = 'DISCONNECTED';
         };
     </script>
 </body>
