@@ -1,12 +1,10 @@
 """
-Soft-body creature implementation using Box2D
+Creature - Soft body with full genome for co-evolution
 """
 
-import numpy as np
 import random
-import box2d
-from box2d import (b2Vec2, b2Body, b2CircleShape, b2PolygonShape, 
-                   b2BodyDef, b2DynamicBody, b2FixtureDef, b2DistanceJointDef)
+import math
+from box2d import b2Vec2
 
 
 class Node:
@@ -31,12 +29,12 @@ class Spring:
         self.stiffness = stiffness
         self.damping = damping
         self.rest_length = rest_length if rest_length is not None else node_a.position.Distance(node_b.position)
-        self.rest_length = max(self.rest_length, 0.1)  # Minimum length
+        self.rest_length = max(self.rest_length, 0.1)
 
 
 class Creature:
     """
-    Soft-body creature made of nodes connected by springs
+    Soft-body creature with full genome for world-guided evolution
     """
     
     def __init__(self, x, y, genome=None):
@@ -58,101 +56,104 @@ class Creature:
         self.build_body(x, y)
     
     def random_genome(self):
-        """Generate random genome"""
+        """Generate random genome with all traits"""
         return {
-            'num_nodes': random.randint(4, 12),
-            'node_radius': random.uniform(0.2, 0.6),
-            'node_mass': random.uniform(0.5, 2.0),
-            'spring_stiffness': random.uniform(20, 100),
-            'spring_damping': random.uniform(1, 10),
-            'shape_type': random.choice(['circle', 'star', 'chain', 'blob']),
-            'color': (
-                random.randint(50, 255),
-                random.randint(50, 255),
-                random.randint(50, 255)
-            ),
-            'brain': self.random_brain()
-        }
-    
-    def random_brain(self):
-        """Generate random brain structure"""
-        return {
-            'hidden_size': random.randint(4, 16),
-            'speed': random.uniform(1, 5),
-            'aggression': random.uniform(0, 1),
-            'curiosity': random.uniform(0, 1)
+            'body': {
+                'size': random.uniform(0.5, 2.0),
+                'shape': random.choice(['blob', 'circle', 'star', 'chain']),
+                'nodes': random.randint(4, 12),
+                'flexibility': random.uniform(0.2, 0.8),
+                'skin_thickness': random.uniform(0.3, 0.7),
+                'color': (
+                    random.randint(50, 255),
+                    random.randint(50, 255),
+                    random.randint(50, 255)
+                ),
+                'fire_resistance': random.uniform(0, 0.3),
+                'optimal_temp': random.uniform(10, 30),
+            },
+            'physiology': {
+                'metabolism': random.uniform(0.3, 0.8),
+                'temp_tolerance': random.uniform(0.2, 0.6),
+                'speed': random.uniform(0.3, 0.8),
+                'strength': random.uniform(0.3, 0.8),
+                'sensory_range': random.uniform(15, 40),
+                'healing': random.uniform(0.2, 0.6),
+                'water_efficiency': random.uniform(0.3, 0.7),
+            },
+            'brain': {
+                'curiosity': random.uniform(0.2, 0.7),
+                'aggression': random.uniform(0.1, 0.5),
+                'social': random.uniform(0.1, 0.4),
+                'memory': random.uniform(0.2, 0.6),
+                'spatial': random.uniform(0.2, 0.6),
+            }
         }
     
     def build_body(self, x, y):
         """Build the soft body from genome"""
         genome = self.genome
-        num_nodes = genome['num_nodes']
-        radius = genome['node_radius']
-        shape = genome['shape_type']
+        body = genome['body']
+        
+        num_nodes = body['nodes']
+        radius = body['size'] * 0.4
+        shape = body['shape']
         
         # Create nodes based on shape
         if shape == 'circle':
-            # Circular arrangement
             for i in range(num_nodes):
-                angle = (2 * np.pi * i) / num_nodes
-                nx = x + radius * 2 * np.cos(angle)
-                ny = y + radius * 2 * np.sin(angle)
-                node = Node(nx, ny, genome['node_mass'], radius)
+                angle = (2 * math.pi * i) / num_nodes
+                nx = x + radius * 2 * math.cos(angle)
+                ny = y + radius * 2 * math.sin(angle)
+                node = Node(nx, ny, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
         elif shape == 'star':
-            # Star shape with center
-            center = Node(x, y, genome['node_mass'], radius * 1.5)
+            center = Node(x, y, body.get('mass', 1.0), radius * 1.5)
             self.nodes.append(center)
             for i in range(num_nodes - 1):
-                angle = (2 * np.pi * i) / (num_nodes - 1)
-                nx = x + radius * 3 * np.cos(angle)
-                ny = y + radius * 3 * np.sin(angle)
-                node = Node(nx, ny, genome['node_mass'] * 0.7, radius * 0.7)
+                angle = (2 * math.pi * i) / (num_nodes - 1)
+                nx = x + radius * 3 * math.cos(angle)
+                ny = y + radius * 3 * math.sin(angle)
+                node = Node(nx, ny, body.get('mass', 1.0) * 0.7, radius * 0.7)
                 self.nodes.append(node)
         
         elif shape == 'chain':
-            # Chain/line
             for i in range(num_nodes):
                 nx = x + i * radius * 1.5 - (num_nodes * radius * 1.5 / 2)
                 ny = y
-                node = Node(nx, ny, genome['node_mass'], radius)
+                node = Node(nx, ny, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
         else:  # blob
-            # Random blob
             for i in range(num_nodes):
-                angle = random.uniform(0, 2 * np.pi)
+                angle = random.uniform(0, 2 * math.pi)
                 dist = random.uniform(0, radius * 2)
-                nx = x + dist * np.cos(angle)
-                ny = y + dist * np.sin(angle)
-                node = Node(nx, ny, genome['node_mass'], radius)
+                nx = x + dist * math.cos(angle)
+                ny = y + dist * math.sin(angle)
+                node = Node(nx, ny, body.get('mass', 1.0), radius)
                 self.nodes.append(node)
         
-        # Create springs (connections between nodes)
-        stiffness = genome['spring_stiffness']
-        damping = genome['spring_damping']
+        # Create springs based on flexibility
+        stiffness = 20 + (1 - body['flexibility']) * 80
+        damping = body['flexibility'] * 10
         
-        # Connect each node to nearby nodes
         for i, node_a in enumerate(self.nodes):
             for j, node_b in enumerate(self.nodes):
-                if i < j:  # Avoid duplicates
+                if i < j:
                     dist = node_a.position.Distance(node_b.position)
-                    if dist < radius * 5:  # Connect close nodes
+                    if dist < radius * 5:
                         spring = Spring(node_a, node_b, stiffness, damping)
                         self.springs.append(spring)
         
-        # Also connect to closest nodes to maintain structure
+        # Ensure structural integrity
         if len(self.nodes) > 2:
-            # Connect to form a more stable structure
             for i in range(len(self.nodes)):
-                # Find 2 closest other nodes
                 distances = [(j, self.nodes[i].position.Distance(self.nodes[j].position)) 
                            for j in range(len(self.nodes)) if j != i]
                 distances.sort(key=lambda x: x[1])
                 
                 for j, _ in distances[:2]:
-                    # Check if connection already exists
                     exists = any(
                         (s.node_a == self.nodes[i] and s.node_b == self.nodes[j]) or
                         (s.node_a == self.nodes[j] and s.node_b == self.nodes[i])
@@ -165,11 +166,9 @@ class Creature:
     def apply_forces(self):
         """Apply internal spring forces"""
         for spring in self.springs:
-            # Get positions
             pos_a = spring.node_a.position
             pos_b = spring.node_b.position
             
-            # Calculate distance
             delta = pos_b - pos_a
             distance = delta.Length()
             if distance < 0.001:
@@ -194,19 +193,21 @@ class Creature:
     
     def apply_input(self, thrust_direction, contraction=0.0):
         """Apply user/thrust input to move creature"""
+        speed = self.genome['physiology']['speed']
+        
         for node in self.nodes:
-            # Apply thrust in direction
-            node.velocity += b2Vec2(thrust_direction[0], thrust_direction[1]) * self.genome['brain']['speed']
+            node.velocity += b2Vec2(
+                thrust_direction[0], 
+                thrust_direction[1]
+            ) * speed * 5
             
-            # Apply contraction (pull nodes together)
+            # Apply contraction
             if contraction > 0:
-                # Find center
                 center = self.get_center()
-                for node in self.nodes:
-                    to_center = center - node.position
-                    dist = to_center.Length()
-                    if dist > 0.1:
-                        node.velocity += to_center.Normalize() * contraction * 2
+                to_center = center - node.position
+                dist = to_center.Length()
+                if dist > 0.1:
+                    node.velocity += to_center.Normalize() * contraction * 3
     
     def get_center(self):
         """Get center of mass"""
@@ -230,64 +231,154 @@ class Creature:
             max_dist = max(max_dist, dist)
         return max_dist
     
-    def update(self, dt):
+    def update(self, dt, world_state=None):
         """Update creature state"""
         if not self.alive:
             return
         
         self.age += dt
-        self.fitness += dt  # Base fitness is survival time
+        self.fitness += dt * 10  # Base fitness is survival
         
         # Apply internal forces
         self.apply_forces()
         
-        # Update velocities (Euler integration)
-        gravity = b2Vec2(0, -10)  # Gravity
+        # Physics update (Euler integration)
+        gravity = b2Vec2(0, -10)
         for node in self.nodes:
             node.velocity += gravity * dt
             node.velocity += node.force / node.mass * dt
             node.position += node.velocity * dt
-            node.force = b2Vec2(0, 0)  # Reset forces
+            node.force = b2Vec2(0, 0)
             
             # Damping
-            node.velocity *= 0.99
+            node.velocity *= 0.98
         
-        # Health decreases over time (metabolism)
-        self.nodes[0].health -= dt * 0.5 * len(self.nodes)
-        if self.nodes[0].health <= 0:
+        # Metabolism - health decreases based on rate
+        metabolism = self.genome['physiology']['metabolism']
+        health_loss = dt * 2 * metabolism * len(self.nodes)
+        
+        # Temperature stress
+        if world_state:
+            temp = world_state.get('temperature', 20)
+            optimal = self.genome['body'].get('optimal_temp', 20)
+            tolerance = self.genome['physiology'].get('temp_tolerance', 0.3) * 30
+            
+            temp_stress = abs(temp - optimal) - tolerance
+            if temp_stress > 0:
+                health_loss += dt * temp_stress * 2
+        
+        # Apply health loss
+        for node in self.nodes:
+            node.health -= health_loss
+        
+        # Check death
+        avg_health = sum(n.health for n in self.nodes) / len(self.nodes)
+        if avg_health <= 0:
             self.alive = False
     
-    def mutate(self, rate=0.1, magnitude=0.2):
-        """Create mutated copy of genome"""
-        new_genome = self.genome.copy()
+    def calculate_adaptation_bonus(self, world_state) -> float:
+        """Calculate fitness bonus based on adaptation to world state"""
+        if not world_state:
+            return 1.0
         
-        # Mutate numeric values
-        for key in ['num_nodes', 'node_radius', 'node_mass', 'spring_stiffness', 
-                   'spring_damping', 'brain']:
-            if key in new_genome and isinstance(new_genome[key], (int, float)):
+        bonus = 1.0
+        
+        # Temperature adaptation
+        temp = world_state.get('temperature', 20)
+        optimal = self.genome['body'].get('optimal_temp', 20)
+        tolerance = self.genome['physiology'].get('temp_tolerance', 0.3) * 30
+        
+        if abs(temp - optimal) < tolerance:
+            bonus *= 1.5  # In comfort zone
+        
+        # Era-specific bonuses
+        era = world_state.get('era', 'primordial')
+        
+        if era == 'age_of_fire':
+            fire_res = self.genome['body'].get('fire_resistance', 0)
+            bonus *= (1 + fire_res)
+        
+        elif era == 'ice_age':
+            # Cold tolerance
+            tolerance = self.genome['physiology'].get('temp_tolerance', 0.3)
+            bonus *= (1 + tolerance)
+        
+        elif era == 'urban':
+            # Spatial intelligence
+            spatial = self.genome['brain'].get('spatial', 0.3)
+            bonus *= (1 + spatial)
+        
+        elif era == 'collapse':
+            # Efficiency
+            efficiency = 1 - self.genome['physiology'].get('metabolism', 0.5)
+            bonus *= (1 + efficiency * 0.5)
+        
+        return bonus
+    
+    def mutate(self, rate=0.3, magnitude=0.3, world_state=None):
+        """Create mutated copy of genome, guided by world state"""
+        new_genome = {
+            'body': self.genome['body'].copy(),
+            'physiology': self.genome['physiology'].copy(),
+            'brain': self.genome['brain'].copy()
+        }
+        
+        # Mutate body traits
+        for key in new_genome['body']:
+            if isinstance(new_genome['body'][key], (int, float)):
                 if random.random() < rate:
-                    new_genome[key] *= random.uniform(1 - magnitude, 1 + magnitude)
-                    new_genome[key] = max(0.1, new_genome[key])  # Keep positive
+                    new_genome['body'][key] *= random.uniform(1 - magnitude, 1 + magnitude)
+                    new_genome['body'][key] = max(0.1, new_genome['body'][key])
+        
+        # Mutate physiology
+        for key in new_genome['physiology']:
+            if isinstance(new_genome['physiology'][key], (int, float)):
+                if random.random() < rate:
+                    new_genome['physiology'][key] += random.uniform(-magnitude, magnitude)
+                    new_genome['physiology'][key] = max(0, min(1, new_genome['physiology'][key]))
+        
+        # Mutate brain
+        for key in new_genome['brain']:
+            if isinstance(new_genome['brain'][key], (int, float)):
+                if random.random() < rate:
+                    new_genome['brain'][key] += random.uniform(-magnitude, magnitude)
+                    new_genome['brain'][key] = max(0, min(1, new_genome['brain'][key]))
         
         # Mutate color
         if random.random() < rate:
-            color = list(new_genome['color'])
+            color = list(new_genome['body']['color'])
             for i in range(3):
                 if random.random() < 0.3:
                     color[i] = max(0, min(255, color[i] + random.randint(-30, 30)))
-            new_genome['color'] = tuple(color)
+            new_genome['body']['color'] = tuple(color)
         
-        # Mutate brain
-        if 'brain' in new_genome:
-            brain = new_genome['brain']
-            for key in brain:
-                if random.random() < rate:
-                    brain[key] += random.uniform(-magnitude, magnitude)
-                    brain[key] = max(0, min(1, brain[key]))
-        
-        # Occasionally change shape
-        if random.random() < rate * 0.5:
-            new_genome['shape_type'] = random.choice(['circle', 'star', 'chain', 'blob'])
+        # World-guided mutations (倾向)
+        if world_state:
+            era = world_state.get('era', 'primordial')
+            temp = world_state.get('temperature', 20)
+            
+            if era == 'age_of_fire' or temp > 35:
+                # Favor fire resistance
+                new_genome['body']['fire_resistance'] = min(1,
+                    new_genome['body'].get('fire_resistance', 0) + random.uniform(0, 0.1))
+            
+            if era == 'ice_age' or temp < 5:
+                # Favor cold tolerance
+                new_genome['body']['optimal_temp'] = max(-10,
+                    new_genome['body'].get('optimal_temp', 20) - random.uniform(0, 2))
+                new_genome['physiology']['temp_tolerance'] = min(1,
+                    new_genome['physiology'].get('temp_tolerance', 0.3) + random.uniform(0, 0.05))
+            
+            if world_state.get('weather') == 'drought':
+                # Favor water efficiency
+                new_genome['physiology']['water_efficiency'] = min(1,
+                    new_genome['physiology'].get('water_efficiency', 0.5) + random.uniform(0, 0.1))
+            
+            structures = world_state.get('terrain', {}).get('structures', [])
+            if len(structures) > 10:
+                # Favor spatial intelligence
+                new_genome['brain']['spatial'] = min(1,
+                    new_genome['brain'].get('spatial', 0.3) + random.uniform(0, 0.1))
         
         return new_genome
     

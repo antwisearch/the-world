@@ -1,169 +1,338 @@
 """
-Simple HTTP API for AI agents to connect to Biological Chaos
+The World API - FastAPI server for AI agents
 """
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+import uvicorn
 import threading
-from src.main import AgentServer
+import time
+
+# Import our modules
+from src.world import World
+from src.creature import Creature
+from src.evolution import EvolutionEngine
+
+# Create FastAPI app
+app = FastAPI(title="The World", description="AI Agent Evolution Simulator")
+
+# Global state
+world = None
+evolution = None
+agents = {}  # agent_id -> creature
 
 
-class APIHandler(BaseHTTPRequestHandler):
-    """HTTP request handler for agent API"""
-    
-    server = None
-    
-    def do_GET(self):
-        if self.path == '/status':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            state = self.server.get_state()
-            self.wfile.write(json.dumps({
-                'status': 'running',
-                'generation': state['generation'],
-                'population': state['population'],
-                'alive': state['alive']
-            }).encode())
-            
-        elif self.path == '/state':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            state = self.server.get_state()
-            self.wfile.write(json.dumps(state).encode())
-            
-        elif self.path.startswith('/agent/'):
-            agent_id = self.path.split('/')[-1]
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            perception = self.server.agent_see(agent_id)
-            self.wfile.write(json.dumps(perception).encode())
-        
-        else:
-            self.send_response(404)
-            self.end_headers()
-    
-    def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length).decode()
-        
-        if self.path == '/agent/register':
-            data = json.loads(body) if body else {}
-            agent_id = data.get('agent_id', f'agent_{id(self)}')
-            
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            
-            result = self.server.register_agent(agent_id)
-            self.wfile.write(json.dumps(result).encode())
-            
-        elif self.path.startswith('/agent/'):
-            parts = self.path.split('/')
-            agent_id = parts[2]
-            action = parts[3] if len(parts) > 3 else 'act'
-            
-            if action == 'act' and body:
-                act_data = json.loads(body)
-                
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                
-                result = self.server.agent_act(agent_id, act_data)
-                self.wfile.write(json.dumps(result).encode())
-            else:
-                self.send_response(404)
-                self.end_headers()
-        else:
-            self.send_response(404)
-            self.end_headers()
-    
-    def log_message(self, format, *args):
-        print(f"[API] {args[0]}")
+# Pydantic models for API
+class RegisterRequest(BaseModel):
+    agent_id: str
+    genome: Optional[Dict] = None
 
 
-def start_api_server(server: AgentServer, port=8080):
-    """Start HTTP API server"""
-    APIHandler.server = server
-    
-    httpd = HTTPServer(('0.0.0.0', port), APIHandler)
-    print(f"🌐 API server running on http://localhost:{port}")
-    httpforever()
+class ActRequest(BaseModel):
+    thrust: tuple = (0, 0)
+    contract: float = 0.0
+    build: Optional[str] = None
+    modify: Optional[str] = None
 
 
-# Exampled.serve_ agent connection
-def example_agent(agent_id: str, server_url: str = "http://localhost:8080"):
-    """
-    Example AI agent connecting to the simulation
-    """
-    import requests
+class WorldState(BaseModel):
+    width: int
+    height: int
+    era: str
+    global_temp: float
+    weather: str
+    climate_zones: List[Dict]
+    impact: Dict
+    time: float
+
+
+class PerceiveResponse(BaseModel):
+    agent_id: str
+    creature_id: int
+    world_era: str
+    climate_zone: str
+    temperature: float
+    weather: str
+    position: Dict
+    nearby_food: List[Dict]
+    nearby_creatures: List[Dict]
+    structures: List[Dict]
+    body_state: Dict
+    genome: Dict
+
+
+# Initialize world
+def init_world():
+    global world, evolution
     
-    # Register
-    resp = requests.post(f"{server_url}/agent/register", json={'agent_id': agent_id})
-    if not resp.json().get('success'):
-        print(f"Failed to register: {resp.json()}")
-        return
+    world = World(width=1200, height=800)
+    evolution = EvolutionEngine(world, population_size=20, generation_time=30)
+    evolution.spawn_initial_population(20)
     
-    print(f"Registered as {agent_id}")
+    return world, evolution
+
+
+# Background simulation thread
+def simulation_loop():
+    global world, evolution
     
-    # Main loop
     while True:
-        # See what the agent perceives
-        perception = requests.get(f"{server_url}/agent/{agent_id}/see").json()
+        # Update world
+        agent_list = list(agents.values())
+        world.update(agent_list, 1/60)
         
-        if 'error' in perception:
-            print(f"Error: {perception['error']}")
-            break
+        # Update evolution
+        evolution.update(1/60)
         
-        # Make decision
-        nearby_food = perception.get('nearby        nearby_threats = perception.get_food', [])
-('nearby_threats', [])
-        
-        thrust = (0, 0)
-        contract = 0.0
-        
-        # Hunt food
-        if nearby_food:
-            nearest = min(nearby_food, key=lambda f: f['distance'])
-            pos = perception['position']
-            thrust = (
-                (nearest['x'] - pos['x']) / max(1, nearest['distance']),
-                (nearest['y'] - pos['y']) / max(1, nearest['distance'])
-            )
-            
-            if nearest['distance'] < 3:
-                contract = 1.0
-        
-        # Avoid threats
-        elif nearby_threats:
-            nearest = min(nearby_threats, key=lambda t: t['distance'])
-            pos = perception['position']
-            thrust = (
-                -(nearest['x'] - pos['x']) / max(1, nearest['distance']),
-                -(nearest['y'] - pos['y']) / max(1, nearest['distance'])
-            )
-        
-        # Send action
-        requests.post(
-            f"{server_url}/agent/{agent_id}/act",
-            json={'thrust': thrust, 'contract': contract}
+        time.sleep(1/60)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start simulation on startup"""
+    global world, evolution
+    
+    world, evolution = init_world()
+    
+    # Start simulation in background
+    sim_thread = threading.Thread(target=simulation_loop, daemon=True)
+    sim_thread.start()
+    
+    print("🌍 The World simulation started")
+
+
+# API Endpoints
+@app.get("/")
+async def root():
+    return {"message": "Welcome to The World - AI Agent Evolution Simulator"}
+
+
+@app.get("/world")
+async def get_world():
+    """Get current world state"""
+    return world.to_dict()
+
+
+@app.get("/world/climate")
+async def get_climate():
+    """Get climate status"""
+    return {
+        'era': world.era,
+        'global_temp': world.global_temp,
+        'weather': world.weather,
+        'zones': [z.to_dict() for z in world.climate_zones],
+        'impact': world.impact
+    }
+
+
+@app.get("/world/terrain")
+async def get_terrain():
+    """Get terrain and structures"""
+    return world.terrain.to_dict()
+
+
+@app.post("/agent/register")
+async def register_agent(request: RegisterRequest):
+    """Register a new agent"""
+    if request.agent_id in agents:
+        return {
+            'success': True,
+            'agent_id': request.agent_id,
+            'message': 'Agent already registered',
+            'creature_id': id(agents[request.agent_id])
+        }
+    
+    # Find available creature
+    available = [c for c in evolution.creatures if c.alive and c not in agents.values()]
+    
+    if not available:
+        return {'error': 'No available creatures'}
+    
+    creature = available[0]
+    agents[request.agent_id] = creature
+    
+    # Apply custom genome if provided
+    if request.genome:
+        creature.genome = request.genome
+    
+    return {
+        'success': True,
+        'agent_id': request.agent_id,
+        'creature_id': id(creature),
+        'genome': creature.genome,
+        'position': {
+            'x': creature.get_center().x,
+            'y': creature.get_center().y
+        }
+    }
+
+
+@app.get("/agent/{agent_id}/perceive")
+async def agent_perceive(agent_id: str):
+    """Get what agent perceives"""
+    if agent_id not in agents:
+        raise HTTPException(status_code=404, detail="Agent not registered")
+    
+    creature = agents[agent_id]
+    
+    if not creature.alive:
+        return {'error': 'Creature dead', 'creature_id': id(creature)}
+    
+    center = creature.get_center()
+    zone = world.get_zone_at(center.x)
+    temp = world.get_temperature_at(center.x, center.y)
+    weather = world.get_weather_at(center.x, center.y)
+    
+    # Find nearby food
+    sensory_range = creature.genome['physiology']['sensory_range']
+    nearby_food = []
+    for food in world.food:
+        dist = center.Distance(food.position)
+        if dist < sensory_range:
+            nearby_food.append({
+                'x': food.position.x,
+                'y': food.position.y,
+                'distance': dist,
+                'nutrition': food.nutrition
+            })
+    
+    # Find nearby creatures
+    nearby_creatures = []
+    for other in evolution.creatures:
+        if other == creature or not other.alive:
+            continue
+        dist = center.Distance(other.get_center())
+        if dist < sensory_range * 2:
+            nearby_creatures.append({
+                'creature_id': id(other),
+                'x': other.get_center().x,
+                'y': other.get_center().y,
+                'distance': dist,
+                'size': other.get_radius(),
+                'aggression': other.genome['brain'].get('aggression', 0.3)
+            })
+    
+    # Get body state
+    avg_health = sum(n.health for n in creature.nodes) / len(creature.nodes)
+    body_state = {
+        'health': avg_health,
+        'age': creature.age,
+        'fitness': creature.fitness,
+        'energy': avg_health
+    }
+    
+    return PerceiveResponse(
+        agent_id=agent_id,
+        creature_id=id(creature),
+        world_era=world.era,
+        climate_zone=zone.name,
+        temperature=temp,
+        weather=weather,
+        position={'x': center.x, 'y': center.y},
+        nearby_food=nearby_food,
+        nearby_creatures=nearby_creatures,
+        structures=world.terrain.structures,
+        body_state=body_state,
+        genome=creature.genome
+    )
+
+
+@app.post("/agent/{agent_id}/act")
+async def agent_act(agent_id: str, action: ActRequest):
+    """Apply agent's action"""
+    if agent_id not in agents:
+        raise HTTPException(status_code=404, detail="Agent not registered")
+    
+    creature = agents[agent_id]
+    
+    if not creature.alive:
+        return {'error': 'Creature dead'}
+    
+    # Apply movement
+    creature.apply_input(action.thrust, action.contract)
+    
+    # Handle world modifications
+    if action.build:
+        world.terrain.add_structure(
+            creature.get_center().x,
+            creature.get_center().y,
+            action.build
         )
+        world.record_action('structures_built')
+    
+    if action.modify:
+        world.record_action('terrain_modified')
+    
+    return {'success': True, 'agent_id': agent_id}
+
+
+@app.get("/stats/evolution")
+async def get_evolution_stats():
+    """Get evolution statistics"""
+    return {
+        'generation': evolution.generation,
+        'time_in_generation': evolution.time_in_generation,
+        'population': len(evolution.creatures),
+        'alive': sum(1 for c in evolution.creatures if c.alive),
+        'best_fitness': evolution.best_creature.fitness if evolution.best_creature else 0,
+        'era_stats': evolution.get_era_stats(),
+        'recent_stats': evolution.generation_stats[-5:] if evolution.generation_stats else []
+    }
+
+
+@app.get("/stats/era")
+async def get_era_info():
+    """Get current era information"""
+    return {
+        'era': world.era,
+        'global_temp': world.global_temp,
+        'weather': world.weather,
+        'impact': world.impact,
+        'era_requirements': {
+            'age_of_fire': '50 fires started',
+            'ice_age': 'global temp < 0',
+            'urban': '100 structures built',
+            'collapse': '200+ fires'
+        }
+    }
+
+
+@app.get("/creatures")
+async def get_creatures():
+    """Get all creatures"""
+    return [
+        {
+            'creature_id': id(c),
+            'alive': c.alive,
+            'age': c.age,
+            'fitness': c.fitness,
+            'generation': c.generation,
+            'genome': c.genome,
+            'position': {'x': c.get_center().x, 'y': c.get_center().y}
+        }
+        for c in evolution.creatures
+    ]
+
+
+# Add food to world
+class Food:
+    def __init__(self, x, y):
+        self.position = b2Vec2(x, y)
+        self.radius = 0.3
+        self.nutrition = 20
+        self.alive = True
+
+
+# Need to import b2Vec2
+from box2d import b2Vec2
+
+
+def run_server(host="0.0.0.0", port=8080):
+    """Run the API server"""
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":
-    # Run with: python -m src.api
-    # Then connect agents from other processes
-    
-    # Start simulation
-    server = AgentServer()
-    server.evolution.generation_time = 30  # 30 seconds per generation
-    
-    # Start API in background
-    api_thread = threading.Thread(target=start_api_server, args=(server, 8080), daemon=True)
-    api_thread.start()
-    
-    # Run simulation
-    server.start()
+    run_server()

@@ -1,84 +1,102 @@
-# Biological Chaos
+# The World
 
-AI Agent Evolution Simulator - Soft-body creatures that evolve through natural selection.
+A co-evolution simulation where AI agents shape their environment, and the environment shapes what creatures evolve.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Box2D](https://img.shields.io/badge/Box2D-Physics-green)
 
 ## Concept
 
-AI agents connect via HTTP API to control soft-body creatures in a physics arena. Agents compete for food, avoid threats, and survive. Survivors evolve - their traits pass to the next generation with mutations.
+**The World** is not just an arena - it's a living, changing ecosystem. AI agents control soft-body creatures that:
+
+1. **Shape the world** - Build structures, start fires, modify terrain
+2. **Adapt to the world** - Evolution selects for traits matching current world state
+3. **Go through eras** - Primordial → Age of Fire → Ice Age → Urban → Collapse
+
+The world responds to collective agent behavior. Enough fires? The world enters the **Age of Fire**. Build 100 structures? Enter the **Urban** era.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Run server (headless)
-python -m src.main --headless
-
-# Or with visualization
 python -m src.main
 ```
 
-## API Endpoints
+## How It Works
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/status` | Server status |
-| GET | `/state` | Full environment state |
-| POST | `/agent/register` | Register new agent |
-| GET | `/agent/<id>/see` | Get agent's perception |
-| POST | `/agent/<id>/act` | Send action to creature |
+### The World State
+- Climate zones (hot, temperate, cold)
+- Weather events (rain, drought, fire, flood)
+- Era that shifts based on agent collective action
+- Terrain with elevation and structures
 
-## Connect an Agent
+### Evolution
+Creatures evolve traits based on world conditions:
+- Fire world → fire-resistant creatures
+- Cold world → cold-hardy creatures  
+- Urban world → spatial intelligence
+- Scarcity → efficient metabolisms
+
+### Eras
+| Era | Trigger | World |
+|-----|---------|-------|
+| Primordial | Start | Warm, abundant |
+| Age of Fire | 50 fires | Hot, dangerous |
+| Ice Age | Temp < 0 | Frozen |
+| Urban | 100 structures | Built environment |
+| Collapse | 200+ fires | Harsh, scarce |
+
+## API
 
 ```python
 import requests
 
 # Register
 resp = requests.post('http://localhost:8080/agent/register', json={'agent_id': 'my_agent'})
-creature_id = resp.json()['creature_id']
 
-# Game loop
-while True:
-    # See environment
-    perception = requests.get(f'http://localhost:8080/agent/my_agent/see').json()
-    
-    # Make decision (hunt food, avoid threats)
-    action = {'thrust': (1, 0), 'contract': 0.5}
-    
-    # Act
-    requests.post(f'http://localhost:8080/agent/my_agent/act', json=action)
+# See what your creature perceives (world state + local environment)
+perception = requests.get('http://localhost:8080/agent/my_agent/perceive').json()
+
+# Act
+requests.post('http://localhost:8080/agent/my_agent/act', json={
+    'move': (1, 0.5),
+    'contract': 0.3,
+    'build': 'wall'  # Optional world modification
+})
 ```
-
-## How It Works
-
-1. **Physics** - Box2D soft-body simulation with nodes + springs
-2. **Evolution** - Every ~30s, survivors reproduce with mutations
-3. **Agent Control** - AI decides thrust direction and body contraction
-4. **Traits Evolve** - Size, shape, stiffness, brain personality
 
 ## Architecture
 
 ```
 src/
-├── main.py      # Server entry point
-├── api.py       # HTTP API for agents
-├── creature.py  # Soft-body + genome
-├── environment.py # Box2D physics
-├── evolution.py # Natural selection
-├── brain.py     # (optional) simple AI brain
-└── renderer.py  # Pygame visualization
+├── main.py      # Server entry
+├── world.py     # World state + climate
+├── creature.py  # Soft body + genome
+├── physics.py   # Box2D wrapper
+├── climate.py   # Weather system
+├── terrain.py   # Elevation + structures
+├── evolution.py # World-guided evolution
+├── api.py       # FastAPI server
+└── agent.py     # Agent connection
 ```
+
+## The Vision
+
+Watch as:
+- Different climates produce different creature species
+- Creatures evolve to exploit new niches
+- Agent societies build and destroy
+- The world goes through epochs
+- Intelligence emerges from chaos
+
+This is not a game you play - it's a world you observe and influence.
 
 ## Tech Stack
 
-- **Python 3.10+**
-- **Box2D** - Physics engine
-- **Pygame** - Visualization (optional)
-- **HTTP** - Agent API
+- Python 3.10+
+- Box2D (physics)
+- FastAPI (agent API)
+- Pygame (optional visualization)
 
 ## License
 

@@ -19,7 +19,7 @@ class Food:
         self.alive = True
 
 
-class Environment:
+class World:
     """
     Physics simulation environment
     """
