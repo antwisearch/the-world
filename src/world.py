@@ -42,19 +42,18 @@ class Terrain:
     
     def _generate_terrain(self):
         """Generate simple terrain with hills and valleys"""
-        import noise
-        import numpy as np
+        import math
         
-        # Use Perlin noise for natural terrain
+        # Simple terrain using sine waves
         for x in range(100):
             for y in range(100):
                 wx = x / 100.0
                 wy = y / 100.0
                 # Simple noise-like function
                 self.elevation[x][y] = (
-                    np.sin(wx * 4) * 0.3 + 
-                    np.cos(wy * 3) * 0.2 +
-                    np.sin(wx * wy * 2) * 0.1
+                    math.sin(wx * 4) * 0.3 + 
+                    math.cos(wy * 3) * 0.2 +
+                    math.sin(wx * wy * 2) * 0.1
                 )
         
         # Add water sources
