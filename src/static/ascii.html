@@ -3,84 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The World - Dwarf Fortress Style</title>
+    <title>The World - Dwarf Fortress</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
             background: #000; 
-            color: #ccc;
+            color: #aaa;
             font-family: 'Courier New', monospace;
             padding: 10px;
-            font-size: 14px;
+            font-size: 11px;
         }
         #game {
-            background: #0a0a0a;
-            padding: 10px;
-            border: 1px solid #333;
+            white-space: pre;
+            background: #111;
+            padding: 5px;
+            border: 1px solid #444;
             display: inline-block;
+            line-height: 11px;
         }
         .header {
-            padding: 10px 0;
+            padding: 5px 0;
             border-bottom: 1px solid #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .title { color: #ffaa00; font-size: 20px; }
-        .subtitle { color: #666; font-size: 12px; }
-        .main { display: flex; gap: 20px; }
+        .title { color: #ffaa00; font-size: 14px; }
+        .info { color: #666; font-size: 10px; }
+        .main { display: flex; gap: 15px; }
         .sidebar {
-            width: 250px;
+            width: 220px;
             vertical-align: top;
         }
         .stat-box {
-            background: #111;
-            padding: 8px;
-            margin-bottom: 8px;
-            border: 1px solid #333;
+            background: #0a0a0a;
+            padding: 5px;
+            margin-bottom: 5px;
+            border: 1px solid #222;
         }
-        .stat-label { color: #666; font-size: 10px; }
-        .stat-value { color: #ccc; }
+        .stat-label { color: #555; font-size: 9px; }
+        .stat-value { color: #888; }
+        .stat-value.good { color: #0a0; }
+        .stat-value.bad { color: #a00; }
         .events {
-            height: 300px;
+            height: 200px;
             overflow-y: auto;
-            font-size: 11px;
+            font-size: 9px;
+            background: #0a0a0a;
+            padding: 5px;
+            border: 1px solid #222;
         }
-        .event { color: #555; margin: 2px 0; }
-        .event.birth { color: #0f0; }
-        .event.death { color: #f00; }
-        .event.build { color: #0ff; }
+        .event { color: #444; margin: 1px 0; }
+        .event.birth { color: #0a0; }
+        .event.death { color: #a00; }
+        .event.build { color: #0aa; }
+        .event.trade { color: #aa0; }
+        .legend {
+            font-size: 9px;
+            background: #0a0a0a;
+            padding: 5px;
+            border: 1px solid #222;
+        }
+        .legend-title { color: #555; margin-bottom: 3px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <span class="title">⛏️ THE WORLD</span>
-        <span class="subtitle"> - A Dwarf Fortress Style Colony Simulation</span>
+        <span class="title">⛏ THE WORLD - Dwarf Fortress Style</span>
+        <span class="info">A colony simulation</span>
     </div>
     <div class="main">
         <div id="game"></div>
         <div class="sidebar">
             <div class="stat-box">
-                <div class="stat-label">Population</div>
+                <div class="stat-label">POPULATION</div>
                 <div class="stat-value" id="pop">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Generation</div>
+                <div class="stat-label">GENERATION</div>
                 <div class="stat-value" id="gen">1</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Avg Happiness</div>
+                <div class="stat-label">HAPPINESS</div>
                 <div class="stat-value" id="hap">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Jobs Done</div>
+                <div class="stat-label">TOTAL LABOR</div>
                 <div class="stat-value" id="jobs">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Workers</div>
+                <div class="stat-label">WORKFORCE</div>
                 <div class="stat-value" id="workers"></div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Event Log</div>
+                <div class="stat-label">BUILDINGS</div>
+                <div class="stat-value" id="buildings"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">EVENT LOG</div>
                 <div class="events" id="events"></div>
+            </div>
+            <div class="legend">
+                <div class="legend-title">SYMBOLS</div>
+                <div>@ = dwarf   h = hunter   b = builder</div>
+                <div>f = farmer   t = trader   g = guard</div>
+                <div>* = food    T = tree    O = stone</div>
+                <div># = ore     ~ = water  [ ] = rooms</div>
             </div>
         </div>
     </div>
@@ -99,22 +128,33 @@
             const agents = data.agents || [];
             
             // Stats
-            document.getElementById('pop').textContent = civ.population || 0;
+            const pop = civ.population || 0;
+            document.getElementById('pop').textContent = pop;
             document.getElementById('gen').textContent = civ.generation || 1;
-            document.getElementById('hap').textContent = (civ.avg_happiness || 0).toFixed(1);
+            
+            const hap = civ.avg_happiness || 0;
+            const hapEl = document.getElementById('hap');
+            hapEl.textContent = hap.toFixed(1) + '%';
+            hapEl.className = 'stat-value ' + (hap > 50 ? 'good' : hap < 30 ? 'bad' : '');
+            
             document.getElementById('jobs').textContent = civ.total_jobs_done || 0;
             
             // Workers
             const jobs = civ.jobs || {};
             document.getElementById('workers').textContent = Object.entries(jobs).map(([j,c]) => j[0].toUpperCase()+':'+c).join(' ') || 'none';
             
+            // Buildings
+            const buildings = world.buildings || [];
+            document.getElementById('buildings').textContent = buildings.length;
+            
             // Events
             const events = world.events || [];
-            let eventsHtml = events.slice(-15).reverse().map(e => {
+            let eventsHtml = events.slice(-20).reverse().map(e => {
                 let cls = 'event';
-                if (e.message.includes('Born') || e.message.includes('arrival')) cls += ' birth';
-                else if (e.message.includes('died')) cls += ' death';
-                else if (e.message.includes('built')) cls += ' build';
+                if (e.message.match(/Born|arrival/i)) cls += ' birth';
+                else if (e.message.match(/died/i)) cls += ' death';
+                else if (e.message.match(/built|construct/i)) cls += ' build';
+                else if (e.message.match(/trade/i)) cls += ' trade';
                 return `<div class="${cls}">${e.message}</div>`;
             }).join('');
             document.getElementById('events').innerHTML = eventsHtml;
@@ -130,64 +170,119 @@
             const buildings = world.buildings || [];
             const water = world.water_sources || [];
             
-            // Grid
+            // Grid - use spaces for empty
             let g = [];
             for (let y = 0; y < H; y++) {
-                g[y] = Array(W).fill('.');
+                g[y] = Array(W).fill(' ');
             }
             
             const wx = x => Math.floor(x / 1200 * W);
             const wy = y => Math.floor((800 - y) / 800 * H);
             
-            // Terrain
+            // Water (draw first, behind everything)
             water.forEach(w => {
-                for (let dy = -4; dy <= 4; dy++) {
-                    for (let dx = -8; dx <= 8; dx++) {
+                for (let dy = -5; dy <= 5; dy++) {
+                    for (let dx = -10; dx <= 10; dx++) {
                         const sx = wx(w.x) + dx;
                         const sy = wy(w.y) + dy;
                         if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                            if (dx*dx + dy*dy < 20) g[sy][sx] = '~';
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            if (dist < 5) g[sy][sx] = '~';
                         }
                     }
                 }
             });
             
-            // Resources
-            resources.forEach(r => {
+            // Trees/wood
+            resources.filter(r => r.type === 'wood').forEach(r => {
                 const sx = wx(r.x);
                 const sy = wy(r.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = r.type === 'food' ? '*' : 
-                                 r.type === 'wood' ? 'T' : 
-                                 r.type === 'stone' ? 'O' : '#';
+                    g[sy][sx] = 'T';
+                    if (sy-1 >= 0) g[sy-1][sx] = '/|\\'[Math.floor(Math.random()*3)];
                 }
             });
             
-            // Buildings  
-            buildings.forEach(b => {
+            // Ore deposits
+            resources.filter(r => r.type === 'ore').forEach(r => {
+                const sx = wx(r.x);
+                const sy = wy(r.y);
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = '#';
+            });
+            
+            // Stone
+            resources.filter(r => r.type === 'stone').forEach(r => {
+                const sx = wx(r.x);
+                const sy = wy(r.y);
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = 'O';
+            });
+            
+            // Food
+            resources.filter(r => r.type === 'food').forEach(r => {
+                const sx = wx(r.x);
+                const sy = wy(r.y);
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = '*';
+            });
+            
+            // Buildings - rooms first
+            buildings.filter(b => b.type === 'shelter').forEach(b => {
+                const sx = wx(b.x);
+                const sy = wy(b.y);
+                const size = b.size || 10;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -2; dx <= 2; dx++) {
+                        const gx = sx + dx;
+                        const gy = sy + dy;
+                        if (gx >= 0 && gx < W && gy >= 0 && gy < H) {
+                            if (dx === -2 || dx === 2 || dy === -1 || dy === 1) g[gy][gx] = '[';
+                            else g[gy][gx] = '#';
+                        }
+                    }
+                }
+            });
+            
+            // Farms
+            buildings.filter(b => b.type === 'farm').forEach(b => {
                 const sx = wx(b.x);
                 const sy = wy(b.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = b.type === 'shelter' ? '█' : 
-                                 b.type === 'farm' ? '░' : 
-                                 b.type === 'workshop' ? '▤' : '?';
+                    g[sy][sx] = '+';
+                    for (let i = -1; i <= 1; i++) {
+                        if (sx+i >= 0 && sx+i < W) g[sy-1][sx+i] = '-';
+                        if (sx+i >= 0 && sx+i < W) g[sy+1][sx+i] = '-';
+                    }
                 }
             });
             
-            // Agents
+            // Workshops
+            buildings.filter(b => b.type === 'workshop').forEach(b => {
+                const sx = wx(b.x);
+                const sy = wy(b.y);
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                    g[sy][sx] = '%';
+                    if (sy-1 >= 0) g[sy-1][sx] = '^';
+                }
+            });
+            
+            // Agents (draw last, on top)
             agents.forEach(a => {
                 const sx = wx(a.position.x);
                 const sy = wy(a.position.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = a.job === 'hunter' ? 'h' :
-                                 a.job === 'builder' ? 'b' :
-                                 a.job === 'farmer' ? 'f' :
-                                 a.job === 'trader' ? 't' :
-                                 a.job === 'guard' ? 'G' : '@';
+                    // Different symbols for different jobs
+                    const chars = {
+                        'hunter': 'h',
+                        'builder': 'b', 
+                        'farmer': 'f',
+                        'trader': 't',
+                        'guard': 'G',
+                        'gatherer': 'g'
+                    };
+                    g[sy][sx] = chars[a.job] || '@';
                 }
             });
             
-            // Border
+            // Build output with border
             let out = '┌' + '─'.repeat(W) + '┐\n';
             for (let y = 0; y < H; y++) {
                 out += '│' + g[y].join('') + '│\n';
@@ -198,7 +293,7 @@
         }
         
         ws.onclose = () => {
-            document.getElementById('game').textContent = 'DISCONNECTED';
+            document.getElementById('game').textContent = 'DISCONNECTED - Refresh to reconnect';
         };
     </script>
 </body>
