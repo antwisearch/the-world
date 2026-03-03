@@ -80,11 +80,16 @@ def init_world():
     return world, evolution
 
 
+import asyncio
+from collections import deque
+
+# Queue for passing state from thread to async
+state_queue = deque(maxlen=1)
+
+
 # Background simulation thread
 def simulation_loop():
     global world, evolution
-    
-    import asyncio
     
     while True:
         # Update world
@@ -94,7 +99,32 @@ def simulation_loop():
         # Update evolution
         evolution.update(1/60)
         
-        # Broadcast to spectators (simplified - actual broadcast done in async context)
+        # Queue state for broadcast
+        import json
+        state = {
+            'world': world.to_dict(),
+            'evolution': {
+                'generation': evolution.generation,
+                'time_in_generation': evolution.time_in_generation,
+                'population': len(evolution.creatures),
+                'alive': sum(1 for c in evolution.creatures if c.alive)
+            },
+            'creatures': [
+                {
+                    'alive': c.alive,
+                    'genome': c.genome,
+                    'position': {'x': c.get_center().x, 'y': c.get_center().y},
+                    'nodes': [{'x': n.position.x, 'y': n.position.y} for n in c.nodes]
+                }
+                for c in evolution.creatures
+            ]
+        }
+        
+        try:
+            state_queue.append(json.dumps(state, default=str))
+        except:
+            pass
+        
         time.sleep(1/60)
 
 
@@ -344,10 +374,17 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             try:
-                data = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
-                # Handle commands from spectator if needed
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=0.1)
             except asyncio.TimeoutError:
                 pass
+            
+            # Check for new state in queue
+            if state_queue:
+                state = state_queue.popleft()
+                try:
+                    await websocket.send_text(state)
+                except:
+                    break
     except Exception:
         pass
     if websocket in spectator_manager.spectators:
