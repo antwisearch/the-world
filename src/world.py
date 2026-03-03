@@ -367,6 +367,7 @@ class World:
             'humidity': self.humidity,
             'climate_zones': [z.to_dict() for z in self.climate_zones],
             'terrain': self.terrain.to_dict(),
+            'food': self.food,
             'impact': self.impact,
             'time': self.time
         }
