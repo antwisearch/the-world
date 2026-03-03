@@ -31,6 +31,7 @@ world = None
 evolution = None
 agents = {}  # agent_id -> creature
 agent_last_active = {}  # agent_id -> last active timestamp
+agent_messages = {}  # agent_id -> list of messages
 SLEEP_TIMEOUT = 30  # seconds before creature sleeps
 
 
@@ -509,3 +510,41 @@ async def list_saves():
     import os
     saves = [f for f in os.listdir('.') if f.endswith('.json')]
     return {'saves': saves}
+
+
+# Message model
+class MessageRequest(BaseModel):
+    recipient_id: str
+    content: str
+
+
+@app.post("/agent/{agent_id}/message")
+async def send_message(agent_id: str, message: MessageRequest):
+    """Send message to another agent"""
+    if agent_id not in agents:
+        raise HTTPException(status_code=404, detail="Agent not registered")
+    
+    # Add to recipient's inbox
+    if message.recipient_id not in agent_messages:
+        agent_messages[message.recipient_id] = []
+    
+    agent_messages[message.recipient_id].append({
+        'from': agent_id,
+        'content': message.content,
+        'time': time.time()
+    })
+    
+    return {'success': True}
+
+
+@app.get("/agent/{agent_id}/messages")
+async def get_messages(agent_id: str):
+    """Get messages for agent"""
+    if agent_id not in agents:
+        raise HTTPException(status_code=404, detail="Agent not registered")
+    
+    messages = agent_messages.get(agent_id, [])
+    # Clear after reading
+    agent_messages[agent_id] = []
+    
+    return {'messages': messages}
