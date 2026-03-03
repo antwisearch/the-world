@@ -255,7 +255,7 @@ class Creature:
         
         # Metabolism - health decreases based on rate
         metabolism = self.genome['physiology']['metabolism']
-        health_loss = dt * 2 * metabolism * len(self.nodes)
+        health_loss = dt * 0.5 * metabolism * len(self.nodes)
         
         # Temperature stress
         if world_state:

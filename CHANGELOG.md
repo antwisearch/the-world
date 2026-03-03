@@ -28,17 +28,17 @@
 ## To Do
 
 ### Priority 1 - Essential
-- [ ] Fix WebSocket broadcasting (currently testing)
+- [x] Fix WebSocket broadcasting
 - [x] Agent sleep mode when offline
-- [ ] Add creature eating food
-- [ ] Add creature collision
-- [ ] Save/load simulation state
+- [x] Add creature eating food
+- [x] Add creature collision
+- [ ] Fix creatures dying too fast
 
 ### Priority 2 - Features
+- [ ] Save/load simulation state
 - [ ] Agent communication
 - [ ] Structure building (agents can modify terrain)
 - [ ] Weather events (rain, drought, fire, flood)
-- [ ] More creature behaviors
 
 ### Priority 3 - Polish
 - [ ] Better graphical rendering
