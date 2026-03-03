@@ -1,21 +1,22 @@
 """
-World - Dwarf Fortress style with resources, buildings, zones
+World - Modular world with resources and buildings
 """
 
 import random
+from src.resources import spawn_resource, spawn_initial_resources
 
 
 class World:
-    """The game world with resources and buildings"""
+    """The game world"""
     
     def __init__(self, width=1200, height=800):
         self.width = width
         self.height = height
         
-        # Resources (food, wood, stone, ore)
+        # Resources
         self.resources = []
         
-        # Buildings (shelters, farms, workshops)
+        # Buildings
         self.buildings = []
         
         # Water sources
@@ -24,128 +25,66 @@ class World:
             {'x': 800, 'y': 600, 'radius': 80}
         ]
         
-        # Agents in the world
+        # Agents
         self.agents = []
         
-        # Events (for storytelling)
+        # Events
         self.events = []
         
         # Era
         self.era = 'settlement'
         
         # Spawn initial resources
-        self.spawn_resources()
-    
-    def spawn_resources(self):
-        """Spawn resources in the world"""
-        # Food sources
-        for _ in range(30):
-            self.resources.append({
-                'type': 'food',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(5, 15)
-            })
-        
-        # Wood (forests)
-        for _ in range(20):
-            self.resources.append({
-                'type': 'wood',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(3, 10)
-            })
-        
-        # Stone
-        for _ in range(15):
-            self.resources.append({
-                'type': 'stone',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(2, 8)
-            })
-        
-        # Ore
-        for _ in range(10):
-            self.resources.append({
-                'type': 'ore',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(1, 5)
-            })
+        spawn_initial_resources(self)
     
     def spawn_more_resources(self):
         """Spawn more resources over time"""
-        # Food respawns
         if random.random() < 0.3:
-            self.resources.append({
-                'type': 'food',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(5, 15)
-            })
+            self.resources.append(spawn_resource(self, 'food'))
         
-        # Trees grow
         if random.random() < 0.1:
-            self.resources.append({
-                'type': 'wood',
-                'x': random.uniform(50, self.width - 50),
-                'y': random.uniform(50, self.height - 50),
-                'amount': random.randint(3, 10)
-            })
+            self.resources.append(spawn_resource(self, 'wood'))
     
     def add_agent(self, agent):
-        """Add an agent to the world"""
         self.agents.append(agent)
     
     def remove_agent(self, agent):
-        """Remove an agent from the world"""
         if agent in self.agents:
             self.agents.remove(agent)
     
     def update(self, dt):
         """Update world"""
-        # Update all agents
         for agent in self.agents:
             if agent.alive:
-                # Update needs
                 agent.update_needs(dt)
-                
-                # Do job
                 agent.do_job(self)
                 
-                # Eat if hungry
                 if agent.needs['food'] < 30:
                     agent.eat()
                 
-                # Drink if thirsty
                 if agent.needs['water'] < 30:
                     agent.drink(self)
                 
-                # Update fitness (survival + jobs done)
                 agent.fitness += dt * (1 + agent.jobs_done * 0.1)
         
-        # Remove dead agents
+        # Remove dead
         dead = [a for a in self.agents if not a.alive]
         for agent in dead:
             self.remove_agent(agent)
             self.log_event(f"Agent died (age: {agent.age:.1f}, jobs: {agent.jobs_done})")
         
-        # Spawn more resources
+        # Spawn resources
         self.spawn_more_resources()
     
     def log_event(self, message):
-        """Log an event"""
         self.events.append({
             'time': len(self.events),
             'message': message
         })
-        # Keep only last 100 events
         if len(self.events) > 100:
             self.events = self.events[-100:]
     
     def get_state(self):
-        """Get world state for API"""
         return {
             'width': self.width,
             'height': self.height,

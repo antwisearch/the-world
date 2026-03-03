@@ -1,14 +1,14 @@
 """
-Agent - Dwarf Fortress style creature with needs, jobs, skills
+Agent - Modular Dwarf Fortress style creature
 """
 
 import random
+from src.jobs import get_job, JOBS
+from src.resources import get_resource
 
 
 class Agent:
     """An agent with needs, jobs, skills, and inventory"""
-    
-    JOBS = ['gatherer', 'builder', 'hunter', 'farmer', 'trader', 'guard']
     
     def __init__(self, x, y, genome=None):
         self.x = x
@@ -22,9 +22,8 @@ class Agent:
         else:
             self.genome = self.random_genome()
         
-        # Position and movement
+        # Position
         self.position = {'x': x, 'y': y}
-        self.velocity = {'x': 0, 'y': 0}
         
         # Needs (0-100)
         self.needs = {
@@ -35,7 +34,7 @@ class Agent:
         }
         
         # Job assignment
-        self.job = random.choice(self.JOBS)
+        self.job = random.choice(list(JOBS.keys()))
         
         # Skills (0-100)
         self.skills = {
@@ -55,7 +54,7 @@ class Agent:
             'goods': 0
         }
         
-        # Home (structure)
+        # Home (building)
         self.home = None
         
         # Stats
@@ -76,9 +75,8 @@ class Agent:
         """Update needs over time"""
         metabolism = self.genome.get('metabolism', 0.5)
         
-        # Food decreases based on metabolism
         self.needs['food'] -= dt * 2 * metabolism
-        self.needs['water'] -= dt * 3  # Water depletes faster
+        self.needs['water'] -= dt * 3
         
         # Shelter affects happiness
         if self.home:
@@ -88,206 +86,22 @@ class Agent:
             self.needs['shelter'] -= dt * 2
             self.needs['happiness'] -= dt * 3
         
-        # Low food affects happiness
         if self.needs['food'] < 20:
             self.needs['happiness'] -= dt * 5
         
-        # Check death
         if self.needs['food'] <= 0 or self.needs['water'] <= 0:
             self.alive = False
         
-        # Clamp needs
         for need in self.needs:
             self.needs[need] = max(0, min(100, self.needs[need]))
     
     def do_job(self, world):
-        """Perform job actions based on assigned job"""
+        """Perform job - uses modular job system"""
         if not self.alive:
             return
         
-        if self.job == 'gatherer':
-            self.gather(world)
-        elif self.job == 'builder':
-            self.build(world)
-        elif self.job == 'hunter':
-            self.hunt(world)
-        elif self.job == 'farmer':
-            self.farm(world)
-        elif self.job == 'trader':
-            self.trade(world)
-        elif self.job == 'guard':
-            self.guard(world)
-    
-    def gather(self, world):
-        """Gather resources from environment"""
-        # Find nearby resources
-        for resource in world.resources[:]:
-            dx = resource['x'] - self.x
-            dy = resource['y'] - self.y
-            dist = (dx*dx + dy*dy) ** 0.5
-            
-            if dist < 10:  # Can gather
-                if resource['type'] == 'food':
-                    self.inventory['food'] += resource.get('amount', 5)
-                    self.needs['food'] = min(100, self.needs['food'] + 10)
-                    world.resources.remove(resource)
-                elif resource['type'] == 'wood':
-                    self.inventory['wood'] += resource.get('amount', 1)
-                elif resource['type'] == 'stone':
-                    self.inventory['stone'] += resource.get('amount', 1)
-                elif resource['type'] == 'ore':
-                    self.inventory['ore'] += resource.get('amount', 1)
-                
-                # Skill up
-                self.skills['gathering'] += 0.1
-                self.jobs_done += 1
-                break
-        
-        # Move randomly to find resources
-        self.move_towards(random.uniform(0, world.width), random.uniform(0, world.height), world)
-    
-    def build(self, world):
-        """Build structures"""
-        wood = self.inventory.get('wood', 0)
-        
-        if wood >= 10:
-            # Build workshop
-            world.buildings.append({
-                'type': 'workshop',
-                'x': self.x + random.uniform(-15, 15),
-                'y': self.y + random.uniform(-15, 15),
-                'owner': id(self),
-                'size': 15
-            })
-            self.inventory['wood'] -= 10
-            self.skills['building'] += 2
-            self.jobs_done += 1
-            
-        elif wood >= 5:
-            # Build shelter
-            world.buildings.append({
-                'type': 'shelter',
-                'x': self.x + random.uniform(-10, 10),
-                'y': self.y + random.uniform(-10, 10),
-                'owner': id(self),
-                'size': 10
-            })
-            self.inventory['wood'] -= 5
-            self.needs['shelter'] = min(100, self.needs['shelter'] + 30)
-            self.home = world.buildings[-1]
-            self.skills['building'] += 1
-            self.jobs_done += 1
-            
-        elif wood >= 3:
-            # Build farm
-            world.buildings.append({
-                'type': 'farm',
-                'x': self.x,
-                'y': self.y,
-                'owner': id(self),
-                'size': 8,
-                'growth': 0
-            })
-            self.inventory['wood'] -= 3
-            self.skills['building'] += 1
-            self.jobs_done += 1
-        else:
-            # Move to find wood
-            self.move_towards(random.uniform(0, world.width), random.uniform(0, world.height), world)
-    
-    def hunt(self, world):
-        """Hunt for food"""
-        # Look for prey
-        for prey in world.agents:
-            if prey == self or not prey.alive:
-                continue
-            
-            dx = prey.x - self.x
-            dy = prey.y - self.y
-            dist = (dx*dx + dy*dy) ** 0.5
-            
-            if dist < 15:
-                # Attack
-                damage = self.skills['combat'] * 0.01
-                prey.needs['happiness'] -= damage * 10
-                
-                if prey.needs['happiness'] <= 0:
-                    # Kill and take food
-                    prey.alive = False
-                    self.inventory['food'] += 10
-                    self.skills['combat'] += 2
-                    self.jobs_done += 1
-                break
-        
-        # Move to find prey
-        self.move_towards(random.uniform(0, world.width), random.uniform(0, world.height), world)
-    
-    def farm(self, world):
-        """Farm food"""
-        # Check for farm plot
-        for building in world.buildings:
-            if building.get('type') == 'farm' and building.get('owner') == id(self):
-                # Harvest
-                self.inventory['food'] += 5
-                self.skills['farming'] += 0.5
-                self.jobs_done += 1
-                return
-        
-        # Build farm if have resources
-        if self.inventory.get('wood', 0) >= 3:
-            world.buildings.append({
-                'type': 'farm',
-                'x': self.x,
-                'y': self.y,
-                'owner': id(self),
-                'growth': 0
-            })
-            self.inventory['wood'] -= 3
-            self.skills['farming'] += 1
-    
-    def trade(self, world):
-        """Trade with other agents"""
-        for other in world.agents:
-            if other == self or not other.alive:
-                continue
-            
-            dx = other.x - self.x
-            dy = other.y - self.y
-            dist = (dx*dx + dy*dy) ** 0.5
-            
-            if dist < 5:
-                # Exchange goods
-                if self.inventory.get('food', 0) > 5 and other.inventory.get('goods', 0) > 0:
-                    self.inventory['food'] -= 3
-                    other.inventory['food'] += 3
-                    self.inventory['goods'] += 1
-                    other.inventory['goods'] -= 1
-                    
-                    self.needs['happiness'] = min(100, self.needs['happiness'] + 5)
-                    other.needs['happiness'] = min(100, other.needs['happiness'] + 5)
-                    
-                    self.skills['trading'] += 1
-                    self.jobs_done += 1
-    
-    def guard(self, world):
-        """Guard area"""
-        # Stay near home or center
-        if self.home:
-            self.move_towards(self.home['x'], self.home['y'], world)
-        
-        # Look for threats
-        for enemy in world.agents:
-            if enemy == self or not enemy.alive:
-                continue
-            
-            dx = enemy.x - self.x
-            dy = enemy.y - self.y
-            dist = (dx*dx + dy*dy) ** 0.5
-            
-            if dist < 20 and enemy.genome.get('aggression', 0.3) > 0.5:
-                # Attack
-                enemy.needs['happiness'] -= self.skills['combat'] * 0.1
-                self.skills['combat'] += 0.5
+        job_class = get_job(self.job)
+        job_class.do_job(self, world)
     
     def move_towards(self, target_x, target_y, world):
         """Move towards target"""
@@ -296,25 +110,20 @@ class Agent:
         dist = (dx*dx + dy*dy) ** 0.5
         
         if dist > 1:
-            speed = 2  # Movement speed
+            speed = 2
             self.x += (dx / dist) * speed
             self.y += (dy / dist) * speed
         
-        # Clamp to world bounds
         self.x = max(0, min(world.width, self.x))
         self.y = max(0, min(world.height, self.y))
-        
-        # Update position dict
         self.position = {'x': self.x, 'y': self.y}
     
     def eat(self):
-        """Eat from inventory"""
         if self.inventory.get('food', 0) > 0:
             self.inventory['food'] -= 1
             self.needs['food'] = min(100, self.needs['food'] + 20)
     
     def drink(self, world):
-        """Find water to drink"""
         for water in world.water_sources:
             dx = water['x'] - self.x
             dy = water['y'] - self.y
@@ -326,7 +135,6 @@ class Agent:
         return False
     
     def get_state(self):
-        """Get agent state for API"""
         return {
             'position': self.position,
             'alive': self.alive,
