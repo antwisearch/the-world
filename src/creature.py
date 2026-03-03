@@ -4,7 +4,7 @@ Creature - Soft body with full genome for co-evolution
 
 import random
 import math
-from box2d import b2Vec2
+from Box2D import b2Vec2
 
 
 class Node:
@@ -28,7 +28,7 @@ class Spring:
         self.node_b = node_b
         self.stiffness = stiffness
         self.damping = damping
-        self.rest_length = rest_length if rest_length is not None else node_a.position.Distance(node_b.position)
+        self.rest_length = rest_length if rest_length is not None else (node_a.position - node_b.position).length
         self.rest_length = max(self.rest_length, 0.1)
 
 
@@ -141,7 +141,7 @@ class Creature:
         for i, node_a in enumerate(self.nodes):
             for j, node_b in enumerate(self.nodes):
                 if i < j:
-                    dist = node_a.position.Distance(node_b.position)
+                    dist = (node_a.position - node_b.position).length
                     if dist < radius * 5:
                         spring = Spring(node_a, node_b, stiffness, damping)
                         self.springs.append(spring)
@@ -149,7 +149,7 @@ class Creature:
         # Ensure structural integrity
         if len(self.nodes) > 2:
             for i in range(len(self.nodes)):
-                distances = [(j, self.nodes[i].position.Distance(self.nodes[j].position)) 
+                distances = [(j, (self.nodes[i].position - self.nodes[j].position).length) 
                            for j in range(len(self.nodes)) if j != i]
                 distances.sort(key=lambda x: x[1])
                 
@@ -170,7 +170,7 @@ class Creature:
             pos_b = spring.node_b.position
             
             delta = pos_b - pos_a
-            distance = delta.Length()
+            distance = delta.length
             if distance < 0.001:
                 continue
             
@@ -182,7 +182,7 @@ class Creature:
             vel_a = spring.node_a.velocity
             vel_b = spring.node_b.velocity
             relative_velocity = vel_b - vel_a
-            damping_force = relative_velocity.Normalize() * spring.damping * relative_velocity.Length()
+            damping_force = relative_velocity * spring.damping
             
             # Apply forces
             direction = delta / distance
@@ -205,9 +205,9 @@ class Creature:
             if contraction > 0:
                 center = self.get_center()
                 to_center = center - node.position
-                dist = to_center.Length()
+                dist = to_center.length
                 if dist > 0.1:
-                    node.velocity += to_center.Normalize() * contraction * 3
+                    node.velocity += (to_center / dist) * contraction * 3
     
     def get_center(self):
         """Get center of mass"""
@@ -227,7 +227,7 @@ class Creature:
         center = self.get_center()
         max_dist = 0
         for node in self.nodes:
-            dist = node.position.Distance(center)
+            dist = (node.position - center).length
             max_dist = max(max_dist, dist)
         return max_dist
     

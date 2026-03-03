@@ -189,7 +189,7 @@ async def agent_perceive(agent_id: str):
     sensory_range = creature.genome['physiology']['sensory_range']
     nearby_food = []
     for food in world.food:
-        dist = center.Distance(food.position)
+        dist = (center - food.position).length
         if dist < sensory_range:
             nearby_food.append({
                 'x': food.position.x,
@@ -203,7 +203,7 @@ async def agent_perceive(agent_id: str):
     for other in evolution.creatures:
         if other == creature or not other.alive:
             continue
-        dist = center.Distance(other.get_center())
+        dist = (center - other.get_center()).length
         if dist < sensory_range * 2:
             nearby_creatures.append({
                 'creature_id': id(other),
@@ -326,7 +326,7 @@ class Food:
 
 
 # Need to import b2Vec2
-from box2d import b2Vec2
+from Box2D import b2Vec2
 
 
 def run_server(host="0.0.0.0", port=8080):

@@ -4,7 +4,7 @@ Brain - Agent decision making for creatures
 
 import random
 import math
-from box2d import b2Vec2
+from Box2D import b2Vec2
 
 
 class Brain:
@@ -34,7 +34,7 @@ class Brain:
         nearest_food_dist = float('inf')
         
         for food in environment.food:
-            dist = creature.get_center().Distance(food.position)
+            dist = (creature.get_center() - food.position).length
             if dist < nearest_food_dist:
                 nearest_food_dist = dist
                 nearest_food = food
@@ -47,9 +47,9 @@ class Brain:
             if other == creature or not other.alive:
                 continue
             
-            dist = creature.get_center().Distance(other.get_center())
-            if dist :
-< nearest_threat_dist                nearest_threat_dist = dist
+            dist = (creature.get_center() - other.get_center()).length
+            if dist < nearest_threat_dist:
+                nearest_threat_dist = dist
                 nearest_threat = other
         
         # Decision making
@@ -64,16 +64,16 @@ class Brain:
         if nearest_threat and nearest_threat_dist < creature.get_radius() * 4:
             # Flee from threat
             flee_dir = creature.get_center() - nearest_threat.get_center()
-            if flee_dir.Length() > 0:
-                direction = flee_dir.Normalize()
+            if flee_dir.length > 0:
+                direction = flee_dir / flee_dir.length
             self.state = 'flee'
         
         # Hunt for food
         elif nearest_food and nearest_food_dist < 50:
             # Move towards food
             food_dir = nearest_food.position - creature.get_center()
-            if food_dir.Length() > 0:
-                direction = food_dir.Normalize()
+            if food_dir.length > 0:
+                direction = food_dir / food_dir.length
             
             # Contract when close to grab
             if nearest_food_dist < creature.get_radius() * 2:
@@ -110,8 +110,8 @@ class Brain:
         if self.aggression > 0.6 and nearest_threat and nearest_threat_dist < 20:
             # Chase instead of flee
             chase_dir = nearest_threat.get_center() - creature.get_center()
-            if chase_dir.Length() > 0:
-                direction = chase_dir.Normalize()
+            if chase_dir.length > 0:
+                direction = chase_dir / chase_dir.length
         
         return (direction.x, direction.y), contraction
     

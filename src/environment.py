@@ -2,8 +2,8 @@
 Physics environment using Box2D
 """
 
-import box2d
-from box2d import (b2Vec2, b2AABB, b2CircleShape, b2PolygonShape,
+import Box2D as box2d
+from Box2D import (b2Vec2, b2AABB, b2CircleShape, b2PolygonShape,
                    b2BodyDef, b2DynamicBody, b2StaticBody, b2FixtureDef,
                    b2Circle, b2Polygon)
 import random
@@ -91,7 +91,7 @@ class World:
                     continue
                 
                 for node in creature.nodes:
-                    dist = node.position.Distance(food.position)
+                    dist = (node.position - food.position).length
                     if dist < node.radius + food.radius:
                         # Eat food
                         food.alive = False
@@ -110,13 +110,13 @@ class World:
                 center_a = creature.get_center()
                 center_b = other.get_center()
                 delta = center_a - center_b
-                dist = delta.Length()
+                dist = delta.length
                 min_dist = creature.get_radius() + other.get_radius()
                 
                 if dist < min_dist and dist > 0.1:
                     # Push apart
                     overlap = min_dist - dist
-                    push = delta.Normalize() * overlap * 0.5
+                    push = (delta / dist if dist > 0 else box2d.b2Vec2(1,0)) * overlap * 0.5
                     for node in creature.nodes:
                         node.position += push
                     for node in other.nodes:

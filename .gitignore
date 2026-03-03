@@ -45,3 +45,5 @@ Thumbs.db
 # OpenClaw
 .openclaw/
 *.bak
+venv2
+venv

@@ -98,7 +98,7 @@ class Renderer:
             y2 = int((self.env.height - spring.node_b.position.y) * self.scale)
             
             # Color based on stress
-            stress = abs(spring.rest_length - spring.node_a.position.Distance(spring.node_b.position))
+            stress = abs(spring.rest_length - (spring.node_a.position - spring.node_b.position).length)
             stress_color = min(255, int(stress * 50))
             line_color = (min(255, color[0] + stress_color),
                          min(255, color[1] + stress_color),
