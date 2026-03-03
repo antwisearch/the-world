@@ -1,444 +1,158 @@
 """
-The World - Co-evolution simulation
-World state, climate, terrain, and era management
+World - Dwarf Fortress style with resources, buildings, zones
 """
 
 import random
-from typing import Dict, List, Tuple, Optional
-
-
-class ClimateZone:
-    """A zone in the world with specific climate conditions"""
-    
-    def __init__(self, name: str, temp: float, x_range: Tuple[float, float]):
-        self.name = name
-        self.temp = temp
-        self.x_range = x_range
-        self.humidity = random.uniform(0.3, 0.7)
-        self.danger_level = 0.0
-    
-    def to_dict(self):
-        return {
-            'name': self.name,
-            'temperature': self.temp,
-            'x_range': self.x_range,
-            'humidity': self.humidity,
-            'danger_level': self.danger_level
-        }
-
-
-class Terrain:
-    """World terrain - elevation and structures"""
-    
-    def __init__(self, width: float, height: float):
-        self.width = width
-        self.height = height
-        self.elevation = [[0 for _ in range(100)] for _ in range(100)]
-        self.structures = []  # Agent-built
-        self.water_sources = []
-        
-        # Generate initial terrain
-        self._generate_terrain()
-    
-    def _generate_terrain(self):
-        """Generate simple terrain with hills and valleys"""
-        import math
-        
-        # Simple terrain using sine waves
-        for x in range(100):
-            for y in range(100):
-                wx = x / 100.0
-                wy = y / 100.0
-                # Simple noise-like function
-                self.elevation[x][y] = (
-                    math.sin(wx * 4) * 0.3 + 
-                    math.cos(wy * 3) * 0.2 +
-                    math.sin(wx * wy * 2) * 0.1
-                )
-        
-        # Add water sources
-        self.water_sources = [
-            {'x': 300 + random.uniform(-50, 50), 'y': 200, 'radius': 80},
-            {'x': 900 + random.uniform(-50, 50), 'y': 600, 'radius': 100}
-        ]
-    
-    def get_elevation(self, x: float, y: float) -> float:
-        """Get elevation at position"""
-        if 0 <= x < self.width and 0 <= y < self.height:
-            ix = int(x / self.width * 99)
-            iy = int(y / self.height * 99)
-            return self.elevation[ix][iy]
-        return 0
-    
-    def add_structure(self, x: float, y: float, structure_type: str):
-        """Add a structure built by an agent"""
-        self.structures.append({
-            'type': structure_type,
-            'x': x,
-            'y': y,
-            'size': random.uniform(5, 15)
-        })
-    
-    def to_dict(self):
-        return {
-            'elevation': self.elevation,
-            'structures': self.structures,
-            'water': self.water_sources
-        }
 
 
 class World:
-    """
-    The World - manages climate, terrain, era, and agent impact
-    """
-    
-    ERAS = ['primordial', 'age_of_fire', 'ice_age', 'urban', 'ocean', 'collapse']
+    """The game world with resources and buildings"""
     
     def __init__(self, width=1200, height=800):
         self.width = width
         self.height = height
         
-        # Climate
-        self.global_temp = 20  # Celsius
-        self.climate_zones = []
-        self.weather = 'none'  # none, rain, drought, fire, flood
-        self.humidity = 0.5
+        # Resources (food, wood, stone, ore)
+        self.resources = []
         
-        # Initialize zones
-        self._init_climate_zones()
+        # Buildings (shelters, farms, workshops)
+        self.buildings = []
         
-        # Terrain
-        self.terrain = Terrain(width, height)
-        
-        # Era system
-        self.era = 'primordial'
-        self.era_progress = 0
-        
-        # Agent impact tracking
-        self.impact = {
-            'structures_built': 0,
-            'fires_started': 0,
-            'water_channeled': 0,
-            'terrain_modified': 0,
-            'creatures_killed': 0,
-            'food_created': 0
-        }
-        
-        # Food
-        self.food = []
-        
-        # Time
-        self.time = 0
-        self.day_night_cycle = 0
-        
-        # Spawn initial food
-        for _ in range(50):
-            self.spawn_food()
-    
-    def _init_climate_zones(self):
-        """Initialize climate zones"""
-        self.climate_zones = [
-            ClimateZone('scorched', 45, (0, 400)),
-            ClimateZone('temperate', 20, (400, 800)),
-            ClimateZone('frozen', -10, (800, 1200))
+        # Water sources
+        self.water_sources = [
+            {'x': 200, 'y': 200, 'radius': 50},
+            {'x': 800, 'y': 600, 'radius': 80}
         ]
+        
+        # Agents in the world
+        self.agents = []
+        
+        # Events (for storytelling)
+        self.events = []
+        
+        # Era
+        self.era = 'settlement'
+        
+        # Spawn initial resources
+        self.spawn_resources()
     
-    def get_zone_at(self, x: float) -> ClimateZone:
-        """Get climate zone at x position"""
-        for zone in self.climate_zones:
-            if zone.x_range[0] <= x <= zone.x_range[1]:
-                return zone
-        return self.climate_zones[1]  # Default to temperate
+    def spawn_resources(self):
+        """Spawn resources in the world"""
+        # Food sources
+        for _ in range(30):
+            self.resources.append({
+                'type': 'food',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(5, 15)
+            })
+        
+        # Wood (forests)
+        for _ in range(20):
+            self.resources.append({
+                'type': 'wood',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(3, 10)
+            })
+        
+        # Stone
+        for _ in range(15):
+            self.resources.append({
+                'type': 'stone',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(2, 8)
+            })
+        
+        # Ore
+        for _ in range(10):
+            self.resources.append({
+                'type': 'ore',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(1, 5)
+            })
     
-    def get_weather_at(self, x: float, y: float) -> str:
-        """Get weather at position (influenced by terrain/climate)"""
-        zone = self.get_zone_at(x)
+    def spawn_more_resources(self):
+        """Spawn more resources over time"""
+        # Food respawns
+        if random.random() < 0.3:
+            self.resources.append({
+                'type': 'food',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(5, 15)
+            })
         
-        # Fire zone has fire weather
-        if zone.name == 'scorched' and self.weather != 'rain':
-            if random.random() < 0.001:  # Spontaneous fire
-                return 'fire'
-        
-        return self.weather
+        # Trees grow
+        if random.random() < 0.1:
+            self.resources.append({
+                'type': 'wood',
+                'x': random.uniform(50, self.width - 50),
+                'y': random.uniform(50, self.height - 50),
+                'amount': random.randint(3, 10)
+            })
     
-    def update(self, agents: List, dt: float):
-        """Update world based on agent actions and time"""
-        self.time += dt
-        self.day_night_cycle = (self.day_night_cycle + dt / 10) % 1
-        
-        # Update climate zones based on era
-        self._update_climate()
-        
-        # Check for era transitions
-        self._check_era_transition()
-        
-        # Random weather events
-        self._update_weather()
+    def add_agent(self, agent):
+        """Add an agent to the world"""
+        self.agents.append(agent)
     
-    def _update_climate(self):
-        """Update climate based on era"""
-        base_temps = {
-            'primordial': 25,
-            'age_of_fire': 40,
-            'ice_age': -15,
-            'urban': 22,
-            'ocean': 18,
-            'collapse': 35
-        }
-        
-        target_temp = base_temps.get(self.era, 20)
-        self.global_temp += (target_temp - self.global_temp) * 0.01
-        
-        # Update zone temperatures
-        for zone in self.climate_zones:
-            if zone.name == 'scorched':
-                zone.temp = self.global_temp + random.uniform(10, 20)
-            elif zone.name == 'frozen':
-                zone.temp = self.global_temp - random.uniform(5, 15)
-            else:
-                zone.temp = self.global_temp + random.uniform(-5, 5)
+    def remove_agent(self, agent):
+        """Remove an agent from the world"""
+        if agent in self.agents:
+            self.agents.remove(agent)
     
-    def _check_era_transition(self):
-        """Check if we should transition to a new era"""
-        fires = self.impact['fires_started']
-        structures = self.impact['structures_built']
-        
-        if self.era == 'primordial':
-            if fires > 50:
-                self.era = 'age_of_fire'
-                print(f"\n[ERA CHANGE]: PRIMORDIAL → AGE OF FIRE")
-        
-        elif self.era == 'age_of_fire':
-            if fires > 200:
-                self.era = 'collapse'
-                print(f"\n[ERA CHANGE]: AGE OF FIRE → COLLAPSE")
-            elif self.global_temp < 5:
-                self.era = 'ice_age'
-                print(f"\n[ERA CHANGE]: AGE OF FIRE → ICE AGE")
-        
-        elif self.era == 'ice_age':
-            if self.global_temp > 10:
-                self.era = 'primordial'
-                print(f"\n[ERA CHANGE]: ICE AGE → PRIMORDIAL")
-        
-        elif self.era == 'urban':
-            if fires > 150:
-                self.era = 'collapse'
-                print(f"\n[ERA CHANGE]: URBAN → COLLAPSE")
-    
-    def apply_weather_effects(self, creatures):
-        """Apply weather effects to creatures"""
-        if self.weather == 'none':
-            return
-        
-        for creature in creatures:
-            if not creature.alive:
-                continue
-            
-            center = creature.get_center()
-            
-            # Rain: heals slowly
-            if self.weather == 'rain':
-                for node in creature.nodes:
-                    node.health = min(100, node.health + 0.1)
-            
-            # Drought: damages
-            elif self.weather == 'drought':
-                for node in creature.nodes:
-                    node.health -= 0.2
-            
-            # Fire: damages, especially in hot zones
-            elif self.weather == 'fire':
-                zone = self.get_zone_at(center.x)
-                if zone.name == 'scorched':
-                    for node in creature.nodes:
-                        node.health -= 0.5
-                else:
-                    for node in creature.nodes:
-                        node.health -= 0.1
-            
-            # Flood: damages and pushes
-            elif self.weather == 'flood':
-                for node in creature.nodes:
-                    node.health -= 0.3
-                    # Push upward
-                    node.position.y += 0.5
-    
-    def apply_structure_effects(self, creatures):
-        """Apply structure effects to creatures"""
-        for creature in creatures:
-            if not creature.alive:
-                continue
-            
-            center = creature.get_center()
-            
-            for struct in self.terrain.structures:
-                dx = struct['x'] - center.x
-                dy = struct['y'] - center.y
-                dist = (dx*dx + dy*dy) ** 0.5
+    def update(self, dt):
+        """Update world"""
+        # Update all agents
+        for agent in self.agents:
+            if agent.alive:
+                # Update needs
+                agent.update_needs(dt)
                 
-                if dist < struct['size']:
-                    # Inside structure - provide protection/shelter
-                    if struct['type'] == 'shelter':
-                        # Heal slowly
-                        for node in creature.nodes:
-                            node.health = min(100, node.health + 0.2)
-                    elif struct['type'] == 'food':
-                        # Eat
-                        creature.food_eaten += 1
-                        creature.fitness += 50
-                        self.terrain.structures.remove(struct)
-                        break
-                    elif struct['type'] == 'wall':
-                        # Push back
-                        push_x = -dx / dist * 0.5
-                        push_y = -dy / dist * 0.5
-                        for node in creature.nodes:
-                            node.position.x += push_x
-                            node.position.y += push_y
-    
-    def _update_weather(self):
-        """Random weather events"""
-        if random.random() < 0.0001:  # Very rare
-            self.weather = random.choice(['rain', 'drought', 'flood'])
-        
-        # Clear weather after a while
-        if self.weather != 'none' and random.random() < 0.001:
-            self.weather = 'none'
-        
-        # Fire spreads in hot zones
-        if self.global_temp > 30 and self.weather != 'rain':
-            if random.random() < 0.0005:
-                self.weather = 'fire'
-    
-    def record_action(self, action_type: str):
-        """Record an agent action for impact tracking"""
-        if action_type in self.impact:
-            self.impact[action_type] += 1
-    
-    def get_food_spawn_rate(self) -> float:
-        """Get food spawn rate based on world state"""
-        rate = 1.0
-        
-        # Drought reduces food
-        if self.weather == 'drought':
-            rate *= 0.3
-        # Rain increases food
-        elif self.weather == 'rain':
-            rate *= 1.5
-        # Fire is bad
-        elif self.weather == 'fire':
-            rate *= 0.5
-        
-        # Era effects
-        if self.era == 'collapse':
-            rate *= 0.4
-        elif self.era == 'ice_age':
-            rate *= 0.6
-        
-        return rate
-    
-    def get_temperature_at(self, x: float, y: float) -> float:
-        """Get temperature at position"""
-        zone = self.get_zone_at(x)
-        
-        # Elevation affects temp
-        elevation = self.terrain.get_elevation(x, y)
-        temp = zone.temp - elevation * 10
-        
-        # Day/night cycle
-        temp += (self.day_night_cycle - 0.5) * 5
-        
-        return temp
-    
-    def spawn_food(self):
-        """Spawn food based on world conditions"""
-        import random
-        
-        # Spawn in temperate zones more often
-        zone = random.choice(self.climate_zones)
-        x = random.uniform(zone.x_range[0], zone.x_range[1])
-        y = random.uniform(100, self.height - 100)
-        
-        food = {
-            'x': x,
-            'y': y,
-            'radius': random.uniform(0.2, 0.4),
-            'nutrition': random.randint(15, 30)
-        }
-        self.food.append(food)
-    
-    def check_collisions(self, creatures):
-        """Check collisions between creatures and food"""
-        # Creature eats food
-        for creature in creatures:
-            if not creature.alive:
-                continue
-            
-            center = creature.get_center()
-            creature_radius = creature.get_radius()
-            
-            for food in self.food:
-                # Distance from creature center to food
-                dx = food['x'] - center.x
-                dy = food['y'] - center.y
-                dist = (dx*dx + dy*dy) ** 0.5
+                # Do job
+                agent.do_job(self)
                 
-                if dist < creature_radius + food['radius']:
-                    # Eat food
-                    creature.food_eaten += 1
-                    creature.fitness += food['nutrition'] * 10
-                    
-                    # Restore health
-                    for node in creature.nodes:
-                        node.health = min(100, node.health + food['nutrition'] * 0.5)
-                    
-                    # Remove food
-                    self.food.remove(food)
+                # Eat if hungry
+                if agent.needs['food'] < 30:
+                    agent.eat()
+                
+                # Drink if thirsty
+                if agent.needs['water'] < 30:
+                    agent.drink(self)
+                
+                # Update fitness (survival + jobs done)
+                agent.fitness += dt * (1 + agent.jobs_done * 0.1)
         
-        # Creature-creature collision (push apart)
-        for i, c1 in enumerate(creatures):
-            if not c1.alive:
-                continue
-            center1 = c1.get_center()
-            r1 = c1.get_radius()
-            
-            for c2 in creatures[i+1:]:
-                if not c2.alive:
-                    continue
-                center2 = c2.get_center()
-                r2 = c2.get_radius()
-                
-                dx = center2.x - center1.x
-                dy = center2.y - center1.y
-                dist = (dx*dx + dy*dy) ** 0.5
-                
-                min_dist = r1 + r2
-                if dist < min_dist and dist > 0.1:
-                    # Push apart
-                    overlap = min_dist - dist
-                    push_x = (dx / dist) * overlap * 0.3
-                    push_y = (dy / dist) * overlap * 0.3
-                    
-                    for node in c1.nodes:
-                        node.position.x -= push_x
-                        node.position.y -= push_y
-                    for node in c2.nodes:
-                        node.position.x += push_x
-                        node.position.y += push_y
+        # Remove dead agents
+        dead = [a for a in self.agents if not a.alive]
+        for agent in dead:
+            self.remove_agent(agent)
+            self.log_event(f"Agent died (age: {agent.age:.1f}, jobs: {agent.jobs_done})")
+        
+        # Spawn more resources
+        self.spawn_more_resources()
     
-    def to_dict(self) -> dict:
-        """Get world state as dict"""
+    def log_event(self, message):
+        """Log an event"""
+        self.events.append({
+            'time': len(self.events),
+            'message': message
+        })
+        # Keep only last 100 events
+        if len(self.events) > 100:
+            self.events = self.events[-100:]
+    
+    def get_state(self):
+        """Get world state for API"""
         return {
             'width': self.width,
             'height': self.height,
             'era': self.era,
-            'global_temp': self.global_temp,
-            'weather': self.weather,
-            'humidity': self.humidity,
-            'climate_zones': [z.to_dict() for z in self.climate_zones],
-            'terrain': self.terrain.to_dict(),
-            'food': self.food,
-            'impact': self.impact,
-            'time': self.time
+            'resources': self.resources,
+            'buildings': self.buildings,
+            'water_sources': self.water_sources,
+            'agents_count': len([a for a in self.agents if a.alive]),
+            'events': self.events[-10:]
         }

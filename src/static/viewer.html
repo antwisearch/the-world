@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The World - Spectator</title>
+    <title>The World - Dwarf Fortress Style</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
@@ -20,7 +20,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .title { font-size: 24px; color: #00ff88; }
+        .title { font-size: 24px; color: #ffaa00; }
         .controls button {
             background: #333;
             color: #fff;
@@ -31,448 +31,248 @@
             font-family: inherit;
         }
         .controls button:hover { background: #444; }
-        .controls button.active { background: #00ff88; color: #000; }
+        .controls button.active { background: #ffaa00; color: #000; }
         
-        .view-container {
+        .main {
             display: flex;
             height: calc(100vh - 70px);
         }
         
-        /* ASCII View */
-        #ascii-view {
+        #game-view {
             flex: 1;
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.2;
-            white-space: pre;
-            overflow: auto;
+            position: relative;
             background: #0d0d12;
-            color: #00ff88;
-        }
-        
-        /* Graphical View */
-        #graphical-view {
-            flex: 1;
-            display: none;
-            background: #0a0a0f;
         }
         #game-canvas {
             width: 100%;
             height: 100%;
         }
         
-        /* Sidebar */
         .sidebar {
-            width: 300px;
+            width: 320px;
             background: #12121a;
             border-left: 2px solid #333;
-            padding: 20px;
+            padding: 15px;
             overflow-y: auto;
         }
-        .stat { margin-bottom: 15px; }
-        .stat-label { color: #888; font-size: 12px; }
-        .stat-value { font-size: 18px; color: #00ff88; }
         
-        .legend { margin-top: 20px; }
-        .legend h3 { color: #888; margin-bottom: 10px; }
-        .legend-item { display: flex; align-items: center; margin: 5px 0; }
-        .legend-symbol { width: 24px; text-align: center; }
+        .stat-box {
+            background: #1a1a2e;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+        }
+        .stat-label { color: #888; font-size: 11px; }
+        .stat-value { font-size: 16px; color: #ffaa00; }
+        .stat-value.green { color: #00ff88; }
+        .stat-value.red { color: #ff4444; }
+        
+        .events {
+            background: #0d0d12;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+            border: 1px solid #333;
+        }
+        .event { margin-bottom: 4px; color: #888; }
+        .event.birth { color: #00ff88; }
+        .event.death { color: #ff4444; }
+        
+        .legend { margin-top: 10px; }
+        .legend h3 { color: #888; font-size: 12px; margin-bottom: 5px; }
+        .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 11px; }
+        .legend-symbol { width: 20px; text-align: center; margin-right: 5px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">🌍 The World</div>
-        <div class="controls">
-            <button id="btn-ascii" class="active" onclick="setView('ascii')">ASCII</button>
-            <button id="btn-graphical" onclick="setView('graphical')">Graphical</button>
-        </div>
+        <div class="title">⛏️ The World - Dwarf Fortress Style</div>
     </div>
     
-    <div class="view-container">
-        <div id="ascii-view"></div>
-        <div id="graphical-view">
+    <div class="main">
+        <div id="game-view">
             <canvas id="game-canvas"></canvas>
         </div>
         <div class="sidebar">
-            <div class="stat">
-                <div class="stat-label">ERA</div>
-                <div class="stat-value" id="era">-</div>
+            <div class="stat-box">
+                <div class="stat-label">POPULATION</div>
+                <div class="stat-value" id="population">0</div>
             </div>
-            <div class="stat">
+            <div class="stat-box">
                 <div class="stat-label">GENERATION</div>
-                <div class="stat-value" id="generation">-</div>
+                <div class="stat-value" id="generation">1</div>
             </div>
-            <div class="stat">
-                <div class="stat-label">TEMPERATURE</div>
-                <div class="stat-value" id="temperature">-</div>
+            <div class="stat-box">
+                <div class="stat-label">AVG HAPPINESS</div>
+                <div class="stat-value" id="happiness">0</div>
             </div>
-            <div class="stat">
-                <div class="stat-label">WEATHER</div>
-                <div class="stat-value" id="weather">-</div>
+            <div class="stat-box">
+                <div class="stat-label">TOTAL JOBS DONE</div>
+                <div class="stat-value green" id="jobs">0</div>
             </div>
-            <div class="stat">
-                <div class="stat-label">CREATURES</div>
-                <div class="stat-value" id="creatures">-</div>
+            
+            <div class="stat-box">
+                <div class="stat-label">JOBS</div>
+                <div id="job-dist"></div>
             </div>
-            <div class="stat">
-                <div class="stat-label">FOOD</div>
-                <div class="stat-value" id="food">-</div>
+            
+            <div class="stat-box">
+                <div class="stat-label">EVENTS</div>
+                <div class="events" id="events"></div>
             </div>
             
             <div class="legend">
-                <h3>CREATURES</h3>
-                <div class="legend-item"><span class="legend-symbol">🦀</span> Circle</div>
-                <div class="legend-item"><span class="legend-symbol">🐙</span> Star</div>
-                <div class="legend-item"><span class="legend-symbol">🐌</span> Blob</div>
-                <div class="legend-item"><span class="legend-symbol">⛓️</span> Chain</div>
+                <h3>SYMBOLS</h3>
+                <div class="legend-item"><span class="legend-symbol">@</span> Agent</div>
+                <div class="legend-item"><span class="legend-symbol">♦</span> Food</div>
+                <div class="legend-item"><span class="legend-symbol">♣</span> Wood</div>
+                <div class="legend-item"><span class="legend-symbol">▲</span> Stone</div>
+                <div class="legend-item"><span class="legend-symbol">●</span> Ore</div>
+                <div class="legend-item"><span class="legend-symbol">□</span> Shelter</div>
+                <div class="legend-item"><span class="legend-symbol">≈</span> Water</div>
             </div>
         </div>
     </div>
 
     <script>
-        // WebSocket connection
         const ws = new WebSocket(`ws://${window.location.host}/ws`);
-        
-        let currentView = 'ascii';
         
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            updateView(data);
+            updateDisplay(data);
         };
         
         ws.onclose = () => {
-            document.getElementById('ascii-view').textContent = 'Disconnected. Refresh to reconnect.';
+            document.getElementById('events').innerHTML = '<div class="event">Disconnected</div>';
         };
         
-        function setView(view) {
-            currentView = view;
-            document.getElementById('btn-ascii').className = view === 'ascii' ? 'active' : '';
-            document.getElementById('btn-graphical').className = view === 'graphical' ? 'active' : '';
-            document.getElementById('ascii-view').style.display = view === 'ascii' ? 'block' : 'none';
-            document.getElementById('graphical-view').style.display = view === 'graphical' ? 'block' : 'none';
-        }
-        
-        function updateView(data) {
-            // Update sidebar
-            document.getElementById('era').textContent = data.world?.era || '-';
-            document.getElementById('generation').textContent = data.evolution?.generation || '-';
-            document.getElementById('temperature').textContent = data.world?.global_temp ? `${data.world.global_temp.toFixed(1)}°C` : '-';
-            document.getElementById('weather').textContent = data.world?.weather || '-';
-            document.getElementById('creatures').textContent = `${data.evolution?.alive || 0}/${data.evolution?.population || 0}`;
-            document.getElementById('food').textContent = data.world?.food?.length || 0;
-            
-            // Render current view
-            if (currentView === 'ascii') {
-                renderASCII(data);
-            } else {
-                renderGraphical(data);
-            }
-        }
-        
-        function renderASCII(data) {
-            const W = 80, H = 30;
+        function updateDisplay(data) {
+            const civ = data.civilization || {};
             const world = data.world || {};
-            const creatures = data.creatures || [];
-            const food = world.food || [];
+            const agents = data.agents || [];
             
-            // Create empty grid
-            let grid = [];
-            for (let y = 0; y < H; y++) {
-                grid[y] = [];
-                for (let x = 0; x < W; x++) {
-                    grid[y][x] = ' ';
-                }
+            // Update stats
+            document.getElementById('population').textContent = civ.population || 0;
+            document.getElementById('generation').textContent = civ.generation || 1;
+            
+            const hap = civ.avg_happiness || 0;
+            const hapEl = document.getElementById('happiness');
+            hapEl.textContent = hap.toFixed(1);
+            hapEl.className = 'stat-value ' + (hap > 50 ? 'green' : hap < 30 ? 'red' : '');
+            
+            document.getElementById('jobs').textContent = civ.total_jobs_done || 0;
+            
+            // Job distribution
+            const jobs = civ.jobs || {};
+            let jobHtml = '';
+            for (const [job, count] of Object.entries(jobs)) {
+                jobHtml += `<div>${job}: ${count}</div>`;
             }
+            document.getElementById('job-dist').innerHTML = jobHtml || 'None';
             
-            // Helper to place creatures
-            const place = (wx, wy, char) => {
-                const sx = Math.floor(wx / 1200 * W);
-                const sy = Math.floor((800 - wy) / 800 * H);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    grid[sy][sx] = char;
-                }
-            };
-            
-            // Place food
-            food.forEach(f => {
-                place(f.x, f.y, '·');
+            // Events
+            const events = world.events || [];
+            let eventsHtml = '';
+            events.slice(-10).forEach(e => {
+                const isBirth = e.message.includes('Born') || e.message.includes('arrival');
+                const isDeath = e.message.includes('died');
+                eventsHtml += `<div class="event ${isBirth ? 'birth' : ''} ${isDeath ? 'death' : ''}">${e.message}</div>`;
             });
+            document.getElementById('events').innerHTML = eventsHtml;
             
-            // Place creatures
-            creatures.forEach(c => {
-                if (!c.alive) return;
-                const shape = c.genome?.body?.shape || 'blob';
-                const symbols = { circle: '🦀', star: '🐙', blob: '🐌', chain: '⛓️' };
-                place(c.position?.x || 0, c.position?.y || 0, symbols[shape] || '?');
-            });
-            
-            // Build output
-            let output = '';
-            
-            // Climate zones header
-            const zones = world.climate_zones || [];
-            zones.forEach(z => {
-                output += `🌡️ ${z.name.toUpperCase()} [${z.x_range}] ${z.temperature}°C\n`;
-            });
-            output += '\n';
-            
-            // Grid
-            output += grid.map(row => row.join('')).join('\n');
-            
-            document.getElementById('ascii-view').textContent = output;
+            // Render
+            render(data);
         }
         
-        function renderGraphical(data) {
+        function render(data) {
             const canvas = document.getElementById('game-canvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size
             canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight - 100;
+            canvas.height = canvas.parentElement.clientHeight;
             
             const W = canvas.width;
             const H = canvas.height;
             const scale = W / 1200;
             
-            // Clear with gradient background
-            const gradient = ctx.createLinearGradient(0, 0, 0, H);
-            gradient.addColorStop(0, '#0a0a1a');
-            gradient.addColorStop(1, '#1a0a2a');
-            ctx.fillStyle = gradient;
+            // Background
+            ctx.fillStyle = '#0d0d12';
             ctx.fillRect(0, 0, W, H);
             
             const world = data.world || {};
-            const creatures = data.creatures || [];
-            const food = world.food || [];
-            const structures = world.terrain?.structures || [];
+            const agents = data.agents || [];
             
-            // Draw climate zones with gradients
-            const zoneColors = { 
-                scorched: { top: '#4a0000', bottom: '#2a0000' },
-                temperate: { top: '#002a00', bottom: '#001a00' },
-                frozen: { top: '#00002a', bottom: '#00001a' }
-            };
-            const zones = world.climate_zones || [];
-            zones.forEach(z => {
-                const colors = zoneColors[z.name] || '#1a1a1a';
-                const x1 = z.x_range[0] * scale;
-                const x2 = z.x_range[1] * scale;
-                const grad = ctx.createLinearGradient(x1, 0, x1, H);
-                grad.addColorStop(0, colors.top);
-                grad.addColorStop(1, colors.bottom);
+            // Water sources
+            (world.water_sources || []).forEach(w => {
+                const wx = w.x * scale;
+                const wy = H - w.y * scale;
+                const wr = w.radius * scale;
+                
+                const grad = ctx.createRadialGradient(wx, wy, 0, wx, wy, wr);
+                grad.addColorStop(0, 'rgba(50, 100, 200, 0.5)');
+                grad.addColorStop(1, 'rgba(50, 100, 200, 0)');
                 ctx.fillStyle = grad;
-                ctx.fillRect(x1, 0, x2 - x1, H);
-                
-                // Zone label
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.font = '12px monospace';
-                ctx.fillText(z.name.toUpperCase(), x1 + 10, 20);
-            });
-            
-            // Draw structures
-            structures.forEach(s => {
-                const sx = s.x * scale;
-                const sy = H - s.y * scale;
-                const ss = s.size * scale;
-                
-                if (s.type === 'shelter') {
-                    // Shelter - hexagon
-                    ctx.fillStyle = '#4444aa';
-                    ctx.beginPath();
-                    for (let i = 0; i < 6; i++) {
-                        const angle = (i * Math.PI * 2) / 6;
-                        const px = sx + ss * Math.cos(angle);
-                        const py = sy + ss * Math.sin(angle);
-                        if (i === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#6666ff';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                } else if (s.type === 'wall') {
-                    // Wall - rectangle
-                    ctx.fillStyle = '#666666';
-                    ctx.fillRect(sx - ss/2, sy - ss/2, ss, ss);
-                    ctx.strokeStyle = '#888888';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(sx - ss/2, sy - ss/2, ss, ss);
-                } else if (s.type === 'food') {
-                    // Food cache - yellow
-                    ctx.fillStyle = '#ffaa00';
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, ss/2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-            
-            // Draw food as glowing dots
-            food.forEach(f => {
-                const fx = f.x * scale;
-                const fy = H - f.y * scale;
-                
-                // Glow effect
-                const glow = ctx.createRadialGradient(fx, fy, 0, fx, fy, 10);
-                glow.addColorStop(0, 'rgba(0, 255, 136, 0.8)');
-                glow.addColorStop(1, 'rgba(0, 255, 136, 0)');
-                ctx.fillStyle = glow;
                 ctx.beginPath();
-                ctx.arc(fx, fy, 10, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Core
-                ctx.fillStyle = '#00ff88';
-                ctx.beginPath();
-                ctx.arc(fx, fy, 3, 0, Math.PI * 2);
+                ctx.arc(wx, wy, wr, 0, Math.PI * 2);
                 ctx.fill();
             });
             
-            // Draw weather overlay
-            const weather = world.weather;
-            if (weather === 'rain') {
-                ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 100; i++) {
-                    const x = Math.random() * W;
-                    const y = Math.random() * H;
-                    ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x - 5, y + 10);
-                    ctx.stroke();
-                }
-            } else if (weather === 'fire') {
-                // Fire particles
-                for (let i = 0; i < 50; i++) {
-                    const x = Math.random() * W;
-                    const y = Math.random() * H * 0.7 + H * 0.3;
-                    const glow = ctx.createRadialGradient(x, y, 0, x, y, 20);
-                    glow.addColorStop(0, 'rgba(255, 100, 0, 0.5)');
-                    glow.addColorStop(1, 'rgba(255, 0, 0, 0)');
-                    ctx.fillStyle = glow;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 20, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            } else if (weather === 'flood') {
-                ctx.fillStyle = 'rgba(0, 100, 200, 0.2)';
-                ctx.fillRect(0, H * 0.7, W, H * 0.3);
-            }
-            
-            // Draw creatures with body shapes
-            creatures.forEach(c => {
-                if (!c.alive) return;
+            // Resources
+            const symbols = { food: '♦', wood: '♣', stone: '▲', ore: '●' };
+            const colors = { food: '#00ff88', wood: '#8B4513', stone: '#888888', ore: '#CD853F' };
+            (world.resources || []).forEach(r => {
+                const rx = r.x * scale;
+                const ry = H - r.y * scale;
                 
-                const cx = (c.position?.x || 0) * scale;
-                const cy = H - (c.position?.y || 0) * scale;
-                const baseRadius = (c.genome?.body?.size || 1) * 10 * scale;
-                const shape = c.genome?.body?.shape || 'blob';
-                
-                // Get color from genome
-                const color = c.genome?.body?.color || [100, 150, 200];
-                const colorStr = `rgb(${color[0]},${color[1]},${color[2]})`;
-                
-                // Draw body based on shape
-                ctx.fillStyle = colorStr;
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                
-                if (shape === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (shape === 'star') {
-                    // Star shape
-                    ctx.beginPath();
-                    for (let i = 0; i < 10; i++) {
-                        const r = i % 2 === 0 ? baseRadius : baseRadius * 0.5;
-                        const angle = (i * Math.PI * 2) / 10;
-                        const px = cx + r * Math.cos(angle);
-                        const py = cy + r * Math.sin(angle);
-                        if (i === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (shape === 'chain') {
-                    // Chain - multiple circles
-                    const nodes = c.genome?.body?.nodes || 5;
-                    for (let i = 0; i < nodes; i++) {
-                        const offset = (i - nodes/2) * baseRadius * 0.5;
-                        ctx.beginPath();
-                        ctx.arc(cx + offset, cy, baseRadius * 0.4, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                } else {
-                    // Blob - organic shape
-                    ctx.beginPath();
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i * Math.PI * 2) / 8;
-                        const r = baseRadius * (0.8 + Math.random() * 0.4);
-                        const px = cx + r * Math.cos(angle);
-                        const py = cy + r * Math.sin(angle);
-                        if (i === 0) ctx.moveTo(px, py);
-                        else ctx.lineTo(px, py);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                }
-                
-                // Draw health bar
-                const health = c.genome ? 1 : 0.5; // Simplified
-                const barWidth = baseRadius * 2;
-                const barHeight = 4;
-                ctx.fillStyle = '#333';
-                ctx.fillRect(cx - barWidth/2, cy - baseRadius - 10, barWidth, barHeight);
-                ctx.fillStyle = health > 0.5 ? '#00ff00' : health > 0.25 ? '#ffaa00' : '#ff0000';
-                ctx.fillRect(cx - barWidth/2, cy - baseRadius - 10, barWidth * health, barHeight);
-                
-                // Draw creature ID or label
-                ctx.fillStyle = '#fff';
-                ctx.font = '10px monospace';
+                ctx.fillStyle = colors[r.type] || '#fff';
+                ctx.font = '14px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(`G${c.generation || 1}`, cx, cy + baseRadius + 15);
+                ctx.fillText(symbols[r.type] || '?', rx, ry);
             });
             
-            // Draw era badge
-            ctx.fillStyle = '#222';
-            ctx.fillRect(10, 10, 120, 30);
-            ctx.strokeStyle = '#444';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(10, 10, 120, 30);
-            ctx.fillStyle = '#00ff88';
-            ctx.font = 'bold 14px monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText(world.era?.toUpperCase() || 'PRIMORDIAL', 20, 30);
+            // Buildings
+            (world.buildings || []).forEach(b => {
+                const bx = b.x * scale;
+                const by = H - b.y * scale;
+                const bs = (b.size || 10) * scale;
+                
+                if (b.type === 'shelter') {
+                    ctx.fillStyle = '#4444aa';
+                    ctx.fillRect(bx - bs/2, by - bs/2, bs, bs);
+                    ctx.strokeStyle = '#6666ff';
+                    ctx.strokeRect(bx - bs/2, by - bs/2, bs, bs);
+                } else if (b.type === 'farm') {
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(bx - bs/2, by - bs/2, bs, bs);
+                }
+            });
             
-            // Stats overlay
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(W - 150, 10, 140, 80);
-            ctx.fillStyle = '#fff';
-            ctx.font = '12px monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText(`Gen: ${data.evolution?.generation || 1}`, W - 140, 28);
-            ctx.fillText(`Alive: ${data.evolution?.alive || 0}`, W - 140, 46);
-            ctx.fillText(`Temp: ${world.global_temp?.toFixed(1) || 20}°C`, W - 140, 64);
-            ctx.fillText(`Weather: ${world.weather || 'none'}`, W - 140, 82);
+            // Agents
+            agents.forEach(a => {
+                const ax = a.position.x * scale;
+                const ay = H - a.position.y * scale;
+                
+                // Color based on happiness
+                const hap = a.needs.happiness;
+                if (hap > 70) ctx.fillStyle = '#00ff88';
+                else if (hap < 30) ctx.fillStyle = '#ff4444';
+                else ctx.fillStyle = '#ffaa00';
+                
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('@', ax, ay);
+                
+                // Job label
+                ctx.fillStyle = '#888';
+                ctx.font = '8px monospace';
+                ctx.fillText(a.job.charAt(0).toUpperCase(), ax + 8, ay - 8);
+            });
         }
         
-        // Handle resize
+        // Resize handler
         window.onresize = () => {
-            if (currentView === 'graphical') {
-                renderGraphical(lastData);
-            }
-        };
-        
-        let lastData = null;
-        const originalUpdate = updateView;
-        updateView = (data) => {
-            lastData = data;
-            originalUpdate(data);
+            // Will re-render on next message
         };
     </script>
 </body>
