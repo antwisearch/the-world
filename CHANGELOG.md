@@ -32,7 +32,7 @@
 - [x] Agent sleep mode when offline
 - [x] Add creature eating food
 - [x] Add creature collision
-- [ ] Fix creatures dying too fast
+- [x] Fix creatures dying too fast
 
 ### Priority 2 - Features
 - [x] Save/load simulation state
