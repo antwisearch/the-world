@@ -226,6 +226,44 @@ class World:
                 self.era = 'collapse'
                 print(f"\n🌍 ERA CHANGE: URBAN → COLLAPSE")
     
+    def apply_weather_effects(self, creatures):
+        """Apply weather effects to creatures"""
+        if self.weather == 'none':
+            return
+        
+        for creature in creatures:
+            if not creature.alive:
+                continue
+            
+            center = creature.get_center()
+            
+            # Rain: heals slowly
+            if self.weather == 'rain':
+                for node in creature.nodes:
+                    node.health = min(100, node.health + 0.1)
+            
+            # Drought: damages
+            elif self.weather == 'drought':
+                for node in creature.nodes:
+                    node.health -= 0.2
+            
+            # Fire: damages, especially in hot zones
+            elif self.weather == 'fire':
+                zone = self.get_zone_at(center.x)
+                if zone.name == 'scorched':
+                    for node in creature.nodes:
+                        node.health -= 0.5
+                else:
+                    for node in creature.nodes:
+                        node.health -= 0.1
+            
+            # Flood: damages and pushes
+            elif self.weather == 'flood':
+                for node in creature.nodes:
+                    node.health -= 0.3
+                    # Push upward
+                    node.position.y += 0.5
+    
     def _update_weather(self):
         """Random weather events"""
         if random.random() < 0.0001:  # Very rare

@@ -120,6 +120,9 @@ def simulation_loop():
         all_creatures = [c for c in evolution.creatures if c.alive]
         world.check_collisions(all_creatures)
         
+        # Apply weather effects
+        world.apply_weather_effects(all_creatures)
+        
         # Spawn food periodically
         if len(world.food) < 30 and random.random() < 0.1:
             world.spawn_food()
