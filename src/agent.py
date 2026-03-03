@@ -135,6 +135,8 @@ class Agent:
                     self.inventory['wood'] += resource.get('amount', 1)
                 elif resource['type'] == 'stone':
                     self.inventory['stone'] += resource.get('amount', 1)
+                elif resource['type'] == 'ore':
+                    self.inventory['ore'] += resource.get('amount', 1)
                 
                 # Skill up
                 self.skills['gathering'] += 0.1
@@ -146,8 +148,22 @@ class Agent:
     
     def build(self, world):
         """Build structures"""
-        # Check resources
-        if self.inventory.get('wood', 0) >= 5:
+        wood = self.inventory.get('wood', 0)
+        
+        if wood >= 10:
+            # Build workshop
+            world.buildings.append({
+                'type': 'workshop',
+                'x': self.x + random.uniform(-15, 15),
+                'y': self.y + random.uniform(-15, 15),
+                'owner': id(self),
+                'size': 15
+            })
+            self.inventory['wood'] -= 10
+            self.skills['building'] += 2
+            self.jobs_done += 1
+            
+        elif wood >= 5:
             # Build shelter
             world.buildings.append({
                 'type': 'shelter',
@@ -159,10 +175,25 @@ class Agent:
             self.inventory['wood'] -= 5
             self.needs['shelter'] = min(100, self.needs['shelter'] + 30)
             self.home = world.buildings[-1]
-            
-            # Skill up
             self.skills['building'] += 1
             self.jobs_done += 1
+            
+        elif wood >= 3:
+            # Build farm
+            world.buildings.append({
+                'type': 'farm',
+                'x': self.x,
+                'y': self.y,
+                'owner': id(self),
+                'size': 8,
+                'growth': 0
+            })
+            self.inventory['wood'] -= 3
+            self.skills['building'] += 1
+            self.jobs_done += 1
+        else:
+            # Move to find wood
+            self.move_towards(random.uniform(0, world.width), random.uniform(0, world.height), world)
     
     def hunt(self, world):
         """Hunt for food"""
@@ -178,7 +209,6 @@ class Agent:
             if dist < 15:
                 # Attack
                 damage = self.skills['combat'] * 0.01
-                # Reduce prey health
                 prey.needs['happiness'] -= damage * 10
                 
                 if prey.needs['happiness'] <= 0:
@@ -273,6 +303,9 @@ class Agent:
         # Clamp to world bounds
         self.x = max(0, min(world.width, self.x))
         self.y = max(0, min(world.height, self.y))
+        
+        # Update position dict
+        self.position = {'x': self.x, 'y': self.y}
     
     def eat(self):
         """Eat from inventory"""
@@ -295,7 +328,7 @@ class Agent:
     def get_state(self):
         """Get agent state for API"""
         return {
-            'position': {'x': self.x, 'y': self.y},
+            'position': self.position,
             'alive': self.alive,
             'needs': self.needs,
             'job': self.job,
