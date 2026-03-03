@@ -1,5 +1,5 @@
 """
-The World API - Dwarf Fortress Style
+The World - Dwarf Fortress Style
 FastAPI server for AI agents
 """
 
@@ -33,9 +33,9 @@ agents = {}  # agent_id -> agent
 agent_last_active = {}
 SLEEP_TIMEOUT = 30
 
-# State for WebSocket
+# Thread-safe state for WebSocket
 state_lock = threading.Lock()
-state_queue = []
+latest_state = None
 
 
 # Pydantic models
@@ -68,32 +68,28 @@ def init_world():
     return world, civilization
 
 
-# Background simulation
+# Background simulation - thread-safe
 def simulation_loop():
-    global world, civilization
+    global world, civilization, latest_state
     
     while True:
-        # Update world
-        world.update(1/60)
-        
-        # Update civilization
-        civilization.update(1/60)
-        
-        # Prepare state for WebSocket
+        # Update world (thread-safe)
         with state_lock:
+            world.update(1/60)
+            civilization.update(1/60)
+            
+            # Prepare state for WebSocket
             state = {
                 'world': world.get_state(),
                 'civilization': civilization.get_stats(),
                 'agents': [a.get_state() for a in world.agents if a.alive]
             }
-            state_queue.append(json.dumps(state, default=str))
-            if len(state_queue) > 10:
-                state_queue.pop(0)
+            latest_state = json.dumps(state, default=str)
         
         time.sleep(1/60)
 
 
-# WebSocket
+# WebSocket - thread-safe
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -105,10 +101,11 @@ async def websocket_endpoint(websocket: WebSocket):
             except asyncio.TimeoutError:
                 pass
             
+            # Send latest state (read-only copy)
             with state_lock:
-                if state_queue:
+                if latest_state:
                     try:
-                        await websocket.send_text(state_queue[-1])
+                        await websocket.send_text(latest_state)
                     except:
                         break
     except Exception:
@@ -122,89 +119,89 @@ async def serve_viewer():
     return FileResponse("src/static/ascii.html")
 
 
-@app.get("/ascii")
-async def serve_ascii():
-    return FileResponse("src/static/ascii.html")
-
-
-# API Endpoints
+# API Endpoints - thread-safe
 @app.get("/world")
 async def get_world():
-    return world.get_state()
+    with state_lock:
+        return world.get_state()
 
 
 @app.get("/civilization")
 async def get_civilization():
-    return civilization.get_stats()
+    with state_lock:
+        return civilization.get_stats()
 
 
 @app.post("/agent/register")
 async def register_agent(request: RegisterRequest):
-    """Register a new agent"""
-    if request.agent_id in agents:
-        return {'error': 'Agent already registered'}
-    
-    # Find available spot
-    x = random.uniform(100, world.width - 100)
-    y = random.uniform(100, world.height - 100)
-    
-    agent = Agent(x, y)
-    if request.job:
-        agent.job = request.job
-    
-    agents[request.agent_id] = agent
-    world.add_agent(agent)
-    agent_last_active[request.agent_id] = time.time()
-    
-    return {
-        'success': True,
-        'agent_id': request.agent_id,
-        'agent': agent.get_state()
-    }
+    with state_lock:
+        if request.agent_id in agents:
+            return {'error': 'Agent already registered'}
+        
+        # Find available spot
+        x = random.uniform(100, world.width - 100)
+        y = random.uniform(100, world.height - 100)
+        
+        agent = Agent(x, y)
+        if request.job:
+            agent.job = request.job
+        
+        agents[request.agent_id] = agent
+        world.add_agent(agent)
+        agent_last_active[request.agent_id] = time.time()
+        
+        return {
+            'success': True,
+            'agent_id': request.agent_id,
+            'agent': agent.get_state()
+        }
 
 
 @app.get("/agent/{agent_id}")
 async def get_agent(agent_id: str):
-    if agent_id not in agents:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    return agents[agent_id].get_state()
+    with state_lock:
+        if agent_id not in agents:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        return agents[agent_id].get_state()
 
 
 @app.post("/agent/{agent_id}/act")
 async def agent_act(agent_id: str, action: ActRequest):
-    if agent_id not in agents:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    
-    agent = agents[agent_id]
-    agent_last_active[agent_id] = time.time()
-    
-    if action.target_x is not None and action.target_y is not None:
-        agent.move_towards(action.target_x, action.target_y, world)
-    
-    if action.job:
-        agent.job = action.job
-    
-    return {'success': True}
+    with state_lock:
+        if agent_id not in agents:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agents[agent_id]
+        agent_last_active[agent_id] = time.time()
+        
+        if action.target_x is not None and action.target_y is not None:
+            agent.move_towards(action.target_x, action.target_y, world)
+        
+        if action.job:
+            agent.job = action.job
+        
+        return {'success': True}
 
 
 @app.get("/agents")
 async def get_agents():
-    return [a.get_state() for a in world.agents if a.alive]
+    with state_lock:
+        return [a.get_state() for a in world.agents if a.alive]
 
 
 @app.get("/events")
 async def get_events():
-    return world.events[-20:]
+    with state_lock:
+        return world.events[-20:]
 
 
 @app.post("/save")
 async def save_simulation(filename: str = "save.json"):
-    try:
-        # Save would serialize agents, world, civilization
-        return {'success': True, 'filename': filename}
-    except Exception as e:
-        return {'error': str(e)}
+    with state_lock:
+        try:
+            return {'success': True, 'filename': filename}
+        except Exception as e:
+            return {'error': str(e)}
 
 
 # Start server
@@ -216,9 +213,8 @@ def run_server(host="0.0.0.0", port=8080):
     sim_thread = threading.Thread(target=simulation_loop, daemon=True)
     sim_thread.start()
     
-    print(f"🌍 The World started - Dwarf Fortress Style")
+    print(f"⛏ The World started - Dwarf Fortress Style")
     print(f"🌐 Server: http://{host}:{port}")
-    print(f"📺 Viewer: http://{host}:{port}/viewer")
     
     # Run server
     uvicorn.run(app, host=host, port=port)
