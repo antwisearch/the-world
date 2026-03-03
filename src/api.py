@@ -11,6 +11,7 @@ import uvicorn
 import threading
 import time
 import json
+import random
 
 # Import our modules
 from src.world import World
@@ -112,6 +113,14 @@ def simulation_loop():
         # Update world
         agent_list = [c for c in agents.values() if c.alive and not getattr(c, 'sleeping', False)]
         world.update(agent_list, 1/60)
+        
+        # Check collisions (eating food, creature-creature)
+        all_creatures = [c for c in evolution.creatures if c.alive]
+        world.check_collisions(all_creatures)
+        
+        # Spawn food periodically
+        if len(world.food) < 30 and random.random() < 0.1:
+            world.spawn_food()
         
         # Update evolution (only non-sleeping creatures)
         for creature in evolution.creatures:

@@ -298,6 +298,65 @@ class World:
         }
         self.food.append(food)
     
+    def check_collisions(self, creatures):
+        """Check collisions between creatures and food"""
+        # Creature eats food
+        for creature in creatures:
+            if not creature.alive:
+                continue
+            
+            center = creature.get_center()
+            creature_radius = creature.get_radius()
+            
+            for food in self.food:
+                # Distance from creature center to food
+                dx = food['x'] - center.x
+                dy = food['y'] - center.y
+                dist = (dx*dx + dy*dy) ** 0.5
+                
+                if dist < creature_radius + food['radius']:
+                    # Eat food
+                    creature.food_eaten += 1
+                    creature.fitness += food['nutrition'] * 10
+                    
+                    # Restore health
+                    for node in creature.nodes:
+                        node.health = min(100, node.health + food['nutrition'] * 0.5)
+                    
+                    # Remove food
+                    self.food.remove(food)
+        
+        # Creature-creature collision (push apart)
+        for i, c1 in enumerate(creatures):
+            if not c1.alive:
+                continue
+            center1 = c1.get_center()
+            r1 = c1.get_radius()
+            
+            for c2 in creatures[i+1:]:
+                if not c2.alive:
+                    continue
+                center2 = c2.get_center()
+                r2 = c2.get_radius()
+                
+                dx = center2.x - center1.x
+                dy = center2.y - center1.y
+                dist = (dx*dx + dy*dy) ** 0.5
+                
+                min_dist = r1 + r2
+                if dist < min_dist and dist > 0.1:
+                    # Push apart
+                    overlap = min_dist - dist
+                    push_x = (dx / dist) * overlap * 0.3
+                    push_y = (dy / dist) * overlap * 0.3
+                    
+                    for node in c1.nodes:
+                        node.position.x -= push_x
+                        node.position.y -= push_y
+                    for node in c2.nodes:
+                        node.position.x += push_x
+                        node.position.y += push_y
+    
     def to_dict(self) -> dict:
         """Get world state as dict"""
         return {
