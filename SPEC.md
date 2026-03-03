@@ -1,7 +1,7 @@
 # Biological Chaos - Specification
 
 ## Concept
-Soft-body creatures that evolve through natural selection based on survival. Agents compete in a physics-based arena where traits like speed, size, shape, and elasticity determine survival.
+**AI Agent Evolution Arena** - A physics-based simulation where AI agents control soft-body creatures, compete for survival, and evolve through natural selection. No human controls - fully automated for AI agents via HTTP/WebSocket API.
 
 ## Core Mechanics
 
