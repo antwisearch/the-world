@@ -20,11 +20,14 @@ def main():
         # Just run simulation without API
         from src.world import World
         from src.evolution import EvolutionEngine
+        from src.environment import World as PhysWorld
         import time
         
         print("[*] Initializing The World...")
         world = World()
+        phys_world = PhysWorld(world.width, world.height)
         evolution = EvolutionEngine(world, args.population, args.generation_time)
+        evolution.phys_world = phys_world
         evolution.spawn_initial_population()
         
         print(f"Population: {args.population}")
@@ -33,7 +36,20 @@ def main():
         
         try:
             while True:
+                # Need dummy agent list for now
                 world.update([], 1/60)
+                
+                # Check collisions (eating food, creature-creature)
+                # Re-syncing food with physics world food
+                world.food = [{'x': f.position.x, 'y': f.position.y, 'radius': f.radius, 'nutrition': f.nutrition} 
+                              for f in phys_world.food if f.alive]
+                
+                all_creatures = [c for c in evolution.creatures if c.alive]
+                world.check_collisions(all_creatures)
+                world.apply_weather_effects(all_creatures)
+                world.apply_structure_effects(all_creatures)
+                
+                phys_world.step(1/60)
                 evolution.update(1/60)
                 time.sleep(1/60)
         except KeyboardInterrupt:

@@ -40,6 +40,8 @@ class Node:
     
     @property
     def position(self):
+        if hasattr(self, 'body') and self.body is None:
+            return getattr(self, '_last_position', b2Vec2(0, 0))
         return self.body.position
     
     @position.setter
@@ -48,6 +50,8 @@ class Node:
         
     @property
     def velocity(self):
+        if hasattr(self, 'body') and self.body is None:
+            return getattr(self, '_last_velocity', b2Vec2(0, 0))
         return self.body.linearVelocity
         
     @velocity.setter
@@ -314,6 +318,9 @@ class Creature:
         self.alive = False
         for node in self.nodes:
             if node.body:
+                # Cache position and velocity before destroying
+                node._last_position = b2Vec2(node.body.position.x, node.body.position.y)
+                node._last_velocity = b2Vec2(node.body.linearVelocity.x, node.body.linearVelocity.y)
                 self.phys_world.world.DestroyBody(node.body)
                 node.body = None
     

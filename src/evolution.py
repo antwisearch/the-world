@@ -28,9 +28,14 @@ class EvolutionEngine:
         for _ in range(count):
             x = random.uniform(100, self.world.width - 100)
             y = random.uniform(self.world.height / 2, self.world.height - 100)
-            creature = Creature(x, y)
+            creature = Creature(x, y, phys_world=getattr(self, 'phys_world', None))
             creature.generation = self.generation
             self.creatures.append(creature)
+            
+            # Register in phys_world if present
+            phys_world = getattr(self, 'phys_world', None)
+            if phys_world:
+                phys_world.add_creature(creature)
     
     def update(self, dt=1/60):
         """Update evolution"""
@@ -164,6 +169,11 @@ class EvolutionEngine:
             new_creature = elite.clone()
             new_creature.generation = self.generation
             self.creatures.append(new_creature)
+            
+            # Register in phys_world if present
+            phys_world = getattr(self, 'phys_world', None)
+            if phys_world:
+                phys_world.add_creature(new_creature)
         
         # Fill rest with mutated offspring
         while len(self.creatures) < self.population_size:
@@ -181,10 +191,16 @@ class EvolutionEngine:
             offspring = Creature(
                 spawn_x,
                 spawn_y,
-                parent.mutate(rate=0.3, magnitude=0.3, world_state=spawn_state)
+                phys_world=getattr(self, 'phys_world', None),
+                genome=parent.mutate(rate=0.3, magnitude=0.3, world_state=spawn_state)
             )
             offspring.generation = self.generation
             self.creatures.append(offspring)
+            
+            # Register in phys_world if present
+            phys_world = getattr(self, 'phys_world', None)
+            if phys_world:
+                phys_world.add_creature(offspring)
         
         print(f"Created {len(self.creatures)} creatures for generation {self.generation}")
     

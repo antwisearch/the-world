@@ -403,18 +403,27 @@ async def get_era_info():
 @app.get("/creatures")
 async def get_creatures():
     """Get all creatures"""
-    return [
-        {
+    result = []
+    for c in evolution.creatures:
+        creature_data = {
             'creature_id': id(c),
             'alive': c.alive,
             'age': c.age,
             'fitness': c.fitness,
             'generation': c.generation,
             'genome': c.genome,
-            'position': {'x': c.get_center().x, 'y': c.get_center().y}
         }
-        for c in evolution.creatures
-    ]
+        
+        try:
+            center = c.get_center()
+            creature_data['position'] = {'x': center.x, 'y': center.y}
+        except AttributeError:
+            # Fallback if node positions fail
+            creature_data['position'] = {'x': 0, 'y': 0}
+            
+        result.append(creature_data)
+        
+    return result
 
 
 # Add food to world
