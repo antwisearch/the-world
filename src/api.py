@@ -127,6 +127,11 @@ async def serve_viewer2():
     return FileResponse("src/static/viewer.html")
 
 
+@app.get("/ascii")
+async def serve_ascii():
+    return FileResponse("src/static/ascii.html")
+
+
 # API Endpoints
 @app.get("/world")
 async def get_world():
