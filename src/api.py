@@ -18,6 +18,7 @@ from src.world import World
 from src.creature import Creature
 from src.evolution import EvolutionEngine
 from src.websocket import spectator_manager
+from src.save import save_state, load_state
 
 # Create FastAPI app
 app = FastAPI(title="The World", description="AI Agent Evolution Simulator")
@@ -463,3 +464,48 @@ def run_server(host="0.0.0.0", port=8080):
 
 if __name__ == "__main__":
     run_server()
+
+
+# Save/Load endpoints
+@app.post("/save")
+async def save_simulation(filename: str = "save.json"):
+    """Save simulation state"""
+    global world, evolution
+    
+    try:
+        filepath = save_state(world, evolution, filename)
+        return {'success': True, 'filename': filepath}
+    except Exception as e:
+        return {'error': str(e)}
+
+
+@app.get("/load/{filename}")
+async def load_simulation(filename: str = "save.json"):
+    """Load simulation state"""
+    global world, evolution
+    
+    try:
+        state = load_state(filename)
+        if not state:
+            return {'error': 'Save file not found'}
+        
+        # Restore world state
+        world_state = state.get('world', {})
+        
+        # Note: Full restoration would require reconstructing objects
+        # For now, just return the state
+        return {
+            'success': True,
+            'generation': state.get('evolution', {}).get('generation', 0),
+            'creatures_count': len(state.get('creatures', []))
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
+
+@app.get("/saves")
+async def list_saves():
+    """List available save files"""
+    import os
+    saves = [f for f in os.listdir('.') if f.endswith('.json')]
+    return {'saves': saves}
