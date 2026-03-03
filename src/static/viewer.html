@@ -228,63 +228,237 @@
             
             // Set canvas size
             canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+            canvas.height = canvas.parentElement.clientHeight - 100;
             
             const W = canvas.width;
             const H = canvas.height;
             const scale = W / 1200;
             
-            // Clear
-            ctx.fillStyle = '#0a0a0f';
+            // Clear with gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, H);
+            gradient.addColorStop(0, '#0a0a1a');
+            gradient.addColorStop(1, '#1a0a2a');
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, W, H);
             
             const world = data.world || {};
             const creatures = data.creatures || [];
             const food = world.food || [];
+            const structures = world.terrain?.structures || [];
             
-            // Draw climate zones
+            // Draw climate zones with gradients
+            const zoneColors = { 
+                scorched: { top: '#4a0000', bottom: '#2a0000' },
+                temperate: { top: '#002a00', bottom: '#001a00' },
+                frozen: { top: '#00002a', bottom: '#00001a' }
+            };
             const zones = world.climate_zones || [];
-            const colors = { scorched: '#4a1a1a', temperate: '#1a3a1a', frozen: '#1a1a4a' };
             zones.forEach(z => {
+                const colors = zoneColors[z.name] || '#1a1a1a';
                 const x1 = z.x_range[0] * scale;
                 const x2 = z.x_range[1] * scale;
-                ctx.fillStyle = colors[z.name] || '#1a1a1a';
+                const grad = ctx.createLinearGradient(x1, 0, x1, H);
+                grad.addColorStop(0, colors.top);
+                grad.addColorStop(1, colors.bottom);
+                ctx.fillStyle = grad;
                 ctx.fillRect(x1, 0, x2 - x1, H);
+                
+                // Zone label
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.font = '12px monospace';
+                ctx.fillText(z.name.toUpperCase(), x1 + 10, 20);
             });
             
-            // Draw food
-            ctx.fillStyle = '#00ff88';
+            // Draw structures
+            structures.forEach(s => {
+                const sx = s.x * scale;
+                const sy = H - s.y * scale;
+                const ss = s.size * scale;
+                
+                if (s.type === 'shelter') {
+                    // Shelter - hexagon
+                    ctx.fillStyle = '#4444aa';
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i * Math.PI * 2) / 6;
+                        const px = sx + ss * Math.cos(angle);
+                        const py = sy + ss * Math.sin(angle);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#6666ff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (s.type === 'wall') {
+                    // Wall - rectangle
+                    ctx.fillStyle = '#666666';
+                    ctx.fillRect(sx - ss/2, sy - ss/2, ss, ss);
+                    ctx.strokeStyle = '#888888';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(sx - ss/2, sy - ss/2, ss, ss);
+                } else if (s.type === 'food') {
+                    // Food cache - yellow
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, ss/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            // Draw food as glowing dots
             food.forEach(f => {
+                const fx = f.x * scale;
+                const fy = H - f.y * scale;
+                
+                // Glow effect
+                const glow = ctx.createRadialGradient(fx, fy, 0, fx, fy, 10);
+                glow.addColorStop(0, 'rgba(0, 255, 136, 0.8)');
+                glow.addColorStop(1, 'rgba(0, 255, 136, 0)');
+                ctx.fillStyle = glow;
                 ctx.beginPath();
-                ctx.arc(f.x * scale, H - f.y * scale, 3, 0, Math.PI * 2);
+                ctx.arc(fx, fy, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Core
+                ctx.fillStyle = '#00ff88';
+                ctx.beginPath();
+                ctx.arc(fx, fy, 3, 0, Math.PI * 2);
                 ctx.fill();
             });
             
-            // Draw creatures
+            // Draw weather overlay
+            const weather = world.weather;
+            if (weather === 'rain') {
+                ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * W;
+                    const y = Math.random() * H;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x - 5, y + 10);
+                    ctx.stroke();
+                }
+            } else if (weather === 'fire') {
+                // Fire particles
+                for (let i = 0; i < 50; i++) {
+                    const x = Math.random() * W;
+                    const y = Math.random() * H * 0.7 + H * 0.3;
+                    const glow = ctx.createRadialGradient(x, y, 0, x, y, 20);
+                    glow.addColorStop(0, 'rgba(255, 100, 0, 0.5)');
+                    glow.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (weather === 'flood') {
+                ctx.fillStyle = 'rgba(0, 100, 200, 0.2)';
+                ctx.fillRect(0, H * 0.7, W, H * 0.3);
+            }
+            
+            // Draw creatures with body shapes
             creatures.forEach(c => {
                 if (!c.alive) return;
                 
-                const x = (c.position?.x || 0) * scale;
-                const y = H - (c.position?.y || 0) * scale;
-                const radius = (c.genome?.body?.size || 1) * 10 * scale;
+                const cx = (c.position?.x || 0) * scale;
+                const cy = H - (c.position?.y || 0) * scale;
+                const baseRadius = (c.genome?.body?.size || 1) * 10 * scale;
+                const shape = c.genome?.body?.shape || 'blob';
                 
-                // Color from genome
+                // Get color from genome
                 const color = c.genome?.body?.color || [100, 150, 200];
-                ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+                const colorStr = `rgb(${color[0]},${color[1]},${color[2]})`;
                 
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fill();
+                // Draw body based on shape
+                ctx.fillStyle = colorStr;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
                 
-                // Draw nodes
-                const nodes = c.nodes || [];
-                ctx.fillStyle = '#fff';
-                nodes.forEach(n => {
+                if (shape === 'circle') {
                     ctx.beginPath();
-                    ctx.arc(n.x * scale, H - n.y * scale, 2, 0, Math.PI * 2);
+                    ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
                     ctx.fill();
-                });
+                    ctx.stroke();
+                } else if (shape === 'star') {
+                    // Star shape
+                    ctx.beginPath();
+                    for (let i = 0; i < 10; i++) {
+                        const r = i % 2 === 0 ? baseRadius : baseRadius * 0.5;
+                        const angle = (i * Math.PI * 2) / 10;
+                        const px = cx + r * Math.cos(angle);
+                        const py = cy + r * Math.sin(angle);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (shape === 'chain') {
+                    // Chain - multiple circles
+                    const nodes = c.genome?.body?.nodes || 5;
+                    for (let i = 0; i < nodes; i++) {
+                        const offset = (i - nodes/2) * baseRadius * 0.5;
+                        ctx.beginPath();
+                        ctx.arc(cx + offset, cy, baseRadius * 0.4, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                } else {
+                    // Blob - organic shape
+                    ctx.beginPath();
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i * Math.PI * 2) / 8;
+                        const r = baseRadius * (0.8 + Math.random() * 0.4);
+                        const px = cx + r * Math.cos(angle);
+                        const py = cy + r * Math.sin(angle);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                
+                // Draw health bar
+                const health = c.genome ? 1 : 0.5; // Simplified
+                const barWidth = baseRadius * 2;
+                const barHeight = 4;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(cx - barWidth/2, cy - baseRadius - 10, barWidth, barHeight);
+                ctx.fillStyle = health > 0.5 ? '#00ff00' : health > 0.25 ? '#ffaa00' : '#ff0000';
+                ctx.fillRect(cx - barWidth/2, cy - baseRadius - 10, barWidth * health, barHeight);
+                
+                // Draw creature ID or label
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`G${c.generation || 1}`, cx, cy + baseRadius + 15);
             });
+            
+            // Draw era badge
+            ctx.fillStyle = '#222';
+            ctx.fillRect(10, 10, 120, 30);
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, 120, 30);
+            ctx.fillStyle = '#00ff88';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(world.era?.toUpperCase() || 'PRIMORDIAL', 20, 30);
+            
+            // Stats overlay
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(W - 150, 10, 140, 80);
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Gen: ${data.evolution?.generation || 1}`, W - 140, 28);
+            ctx.fillText(`Alive: ${data.evolution?.alive || 0}`, W - 140, 46);
+            ctx.fillText(`Temp: ${world.global_temp?.toFixed(1) || 20}°C`, W - 140, 64);
+            ctx.fillText(`Weather: ${world.weather || 'none'}`, W - 140, 82);
         }
         
         // Handle resize
