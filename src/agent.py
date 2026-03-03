@@ -5,6 +5,7 @@ Agent - Modular Dwarf Fortress style creature
 import random
 from src.jobs import get_job, JOBS
 from src.resources import get_resource
+from src.behaviors import agent_think
 
 
 class Agent:
@@ -96,10 +97,14 @@ class Agent:
             self.needs[need] = max(0, min(100, self.needs[need]))
     
     def do_job(self, world):
-        """Perform job - uses modular job system"""
+        """Perform job - uses AI behavior then job system"""
         if not self.alive:
             return
         
+        # AI thinks first
+        state = agent_think(self, world)
+        
+        # Then do job
         job_class = get_job(self.job)
         job_class.do_job(self, world)
     

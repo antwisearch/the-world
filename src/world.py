@@ -4,6 +4,7 @@ World - Modular world with resources and buildings
 
 import random
 from src.resources import spawn_resource, spawn_initial_resources
+from src.events import trigger_random_event
 
 
 class World:
@@ -54,6 +55,25 @@ class World:
     
     def update(self, dt):
         """Update world"""
+        # Trigger random events
+        trigger_random_event(self)
+        
+        # Update raiders
+        if hasattr(self, 'raiders'):
+            for raider in self.raiders:
+                if not raider.alive:
+                    continue
+                # Raiders attack nearest agent
+                alive = [a for a in self.agents if a.alive]
+                if alive:
+                    target = min(alive, key=lambda a: ((a.x-raider.x)**2 + (a.y-raider.y)**2)**0.5)
+                    raider.move_towards(target.x, target.y, self)
+                    if ((target.x-raider.x)**2 + (target.y-raider.y)**2)**0.5 < 5:
+                        target.needs['happiness'] -= 10
+                        if target.needs['happiness'] <= 0:
+                            target.alive = False
+        
+        # Update agents
         for agent in self.agents:
             if agent.alive:
                 agent.update_needs(dt)
