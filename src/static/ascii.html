@@ -20,6 +20,8 @@
             border: 1px solid #444;
             display: inline-block;
             line-height: 11px;
+            transform: scale(1.5);
+            transform-origin: top left;
         }
         .header {
             padding: 5px 0;
@@ -66,6 +68,24 @@
             border: 1px solid #222;
         }
         .legend-title { color: #555; margin-bottom: 3px; }
+        
+        /* ASCII Colors */
+        .c-water { color: #00aaff; }
+        .c-tree { color: #00ff00; }
+        .c-wood { color: #00cc00; }
+        .c-ore { color: #ff6600; }
+        .c-stone { color: #888888; }
+        .c-food { color: #ffaa00; }
+        .c-agent { color: #ff66ff; }
+        .c-agent-hunter { color: #ff4444; }
+        .c-agent-builder { color: #44aaff; }
+        .c-agent-farmer { color: #44ff44; }
+        .c-agent-trader { color: #ffff00; }
+        .c-agent-guard { color: #ff6666; }
+        .c-agent-gatherer { color: #aaaaaa; }
+        .c-shelter { color: #aa6600; }
+        .c-farm { color: #22cc22; }
+        .c-workshop { color: #aa44aa; }
     </style>
 </head>
 <body>
@@ -98,7 +118,19 @@
             </div>
             <div class="stat-box">
                 <div class="stat-label">BUILDINGS</div>
-                <div class="stat-value" id="buildings"></div>
+                <div class="stat-value" id="buildings">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">YEAR</div>
+                <div class="stat-value" id="year">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">AGENTS</div>
+                <div class="agents" id="agents"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">ARTIFACTS</div>
+                <div class="stat-value" id="artifacts">0</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">EVENT LOG</div>
@@ -106,10 +138,12 @@
             </div>
             <div class="legend">
                 <div class="legend-title">SYMBOLS</div>
-                <div>@ = dwarf   h = hunter   b = builder</div>
-                <div>f = farmer   t = trader   g = guard</div>
-                <div>* = food    T = tree    O = stone</div>
-                <div># = ore     ~ = water  [ ] = rooms</div>
+                <div><span class="c-agent">@</span> = dwarf <span class="c-agent-hunter">h</span> = hunter</div>
+                <div><span class="c-agent-builder">b</span> = builder <span class="c-agent-farmer">f</span> = farmer</div>
+                <div><span class="c-agent-trader">t</span> = trader <span class="c-agent-guard">G</span> = guard</div>
+                <div><span class="c-food">*</span> = food <span class="c-tree">T</span> = tree</div>
+                <div><span class="c-stone">O</span> = stone <span class="c-ore">#</span> = ore</div>
+                <div><span class="c-water">~</span> = water <span class="c-shelter">[#]</span> = shelter</div>
             </div>
         </div>
     </div>
@@ -147,6 +181,30 @@
             const buildings = world.buildings || [];
             document.getElementById('buildings').textContent = buildings.length;
             
+            // Year
+            const history = data.history || {};
+            document.getElementById('year').textContent = history.summary?.year || 0;
+            
+            // Artifacts
+            const artifacts = world.artifacts || {};
+            document.getElementById('artifacts').textContent = artifacts.total || 0;
+            
+            // Agent list with names
+            const agentsList = document.getElementById('agents');
+            const agentsHtml = agents.map(a => {
+                const name = a.name || 'Unknown';
+                const shortName = name.split(' ')[0].substring(0, 10);
+                const job = a.job ? a.job[0].toUpperCase() : '?';
+                const hap = a.needs?.happiness || 0;
+                const hapColor = hap > 50 ? '#0a0' : hap < 30 ? '#a00' : '#888';
+                return `<div style="font-size:8px;margin:2px 0;">
+                    <span style="color:#ff66ff">${job}</span> 
+                    ${shortName}
+                    <span style="color:${hapColor}">${hap.toFixed(0)}%</span>
+                </div>`;
+            }).join('');
+            agentsList.innerHTML = agentsHtml;
+            
             // Events
             const events = world.events || [];
             let eventsHtml = events.slice(-20).reverse().map(e => {
@@ -170,16 +228,18 @@
             const buildings = world.buildings || [];
             const water = world.water_sources || [];
             
-            // Grid - use spaces for empty
+            // Grid - store char + color class
             let g = [];
+            let colors = [];
             for (let y = 0; y < H; y++) {
                 g[y] = Array(W).fill(' ');
+                colors[y] = Array(W).fill('');
             }
             
             const wx = x => Math.floor(x / 1200 * W);
             const wy = y => Math.floor((800 - y) / 800 * H);
             
-            // Water (draw first, behind everything)
+            // Water
             water.forEach(w => {
                 for (let dy = -5; dy <= 5; dy++) {
                     for (let dx = -10; dx <= 10; dx++) {
@@ -187,7 +247,10 @@
                         const sy = wy(w.y) + dy;
                         if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
                             const dist = Math.sqrt(dx*dx + dy*dy);
-                            if (dist < 5) g[sy][sx] = '~';
+                            if (dist < 5) {
+                                g[sy][sx] = '~';
+                                colors[sy][sx] = 'c-water';
+                            }
                         }
                     }
                 }
@@ -199,7 +262,7 @@
                 const sy = wy(r.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
                     g[sy][sx] = 'T';
-                    if (sy-1 >= 0) g[sy-1][sx] = '/|\\'[Math.floor(Math.random()*3)];
+                    colors[sy][sx] = 'c-tree';
                 }
             });
             
@@ -207,35 +270,48 @@
             resources.filter(r => r.type === 'ore').forEach(r => {
                 const sx = wx(r.x);
                 const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = '#';
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                    g[sy][sx] = '#';
+                    colors[sy][sx] = 'c-ore';
+                }
             });
             
             // Stone
             resources.filter(r => r.type === 'stone').forEach(r => {
                 const sx = wx(r.x);
                 const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = 'O';
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                    g[sy][sx] = 'O';
+                    colors[sy][sx] = 'c-stone';
+                }
             });
             
             // Food
             resources.filter(r => r.type === 'food').forEach(r => {
                 const sx = wx(r.x);
                 const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) g[sy][sx] = '*';
+                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                    g[sy][sx] = '*';
+                    colors[sy][sx] = 'c-food';
+                }
             });
             
-            // Buildings - rooms first
+            // Buildings - shelter
             buildings.filter(b => b.type === 'shelter').forEach(b => {
                 const sx = wx(b.x);
                 const sy = wy(b.y);
-                const size = b.size || 10;
                 for (let dy = -1; dy <= 1; dy++) {
                     for (let dx = -2; dx <= 2; dx++) {
                         const gx = sx + dx;
                         const gy = sy + dy;
                         if (gx >= 0 && gx < W && gy >= 0 && gy < H) {
-                            if (dx === -2 || dx === 2 || dy === -1 || dy === 1) g[gy][gx] = '[';
-                            else g[gy][gx] = '#';
+                            if (dx === -2 || dx === 2 || dy === -1 || dy === 1) {
+                                g[gy][gx] = '[';
+                                colors[gy][gx] = 'c-shelter';
+                            } else {
+                                g[gy][gx] = '#';
+                                colors[gy][gx] = 'c-shelter';
+                            }
                         }
                     }
                 }
@@ -247,9 +323,16 @@
                 const sy = wy(b.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
                     g[sy][sx] = '+';
+                    colors[sy][sx] = 'c-farm';
                     for (let i = -1; i <= 1; i++) {
-                        if (sx+i >= 0 && sx+i < W) g[sy-1][sx+i] = '-';
-                        if (sx+i >= 0 && sx+i < W) g[sy+1][sx+i] = '-';
+                        if (sx+i >= 0 && sx+i < W) {
+                            g[sy-1][sx+i] = '-';
+                            colors[sy-1][sx+i] = 'c-farm';
+                        }
+                        if (sx+i >= 0 && sx+i < W) {
+                            g[sy+1][sx+i] = '-';
+                            colors[sy+1][sx+i] = 'c-farm';
+                        }
                     }
                 }
             });
@@ -260,16 +343,24 @@
                 const sy = wy(b.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
                     g[sy][sx] = '%';
-                    if (sy-1 >= 0) g[sy-1][sx] = '^';
+                    colors[sy][sx] = 'c-workshop';
                 }
             });
             
-            // Agents (draw last, on top)
+            // Agents
+            const agentColors = {
+                'hunter': 'c-agent-hunter',
+                'builder': 'c-agent-builder',
+                'farmer': 'c-agent-farmer',
+                'trader': 'c-agent-trader',
+                'guard': 'c-agent-guard',
+                'gatherer': 'c-agent-gatherer'
+            };
+            
             agents.forEach(a => {
                 const sx = wx(a.position.x);
                 const sy = wy(a.position.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    // Different symbols for different jobs
                     const chars = {
                         'hunter': 'h',
                         'builder': 'b', 
@@ -279,21 +370,31 @@
                         'gatherer': 'g'
                     };
                     g[sy][sx] = chars[a.job] || '@';
+                    colors[sy][sx] = agentColors[a.job] || 'c-agent';
                 }
             });
             
-            // Build output with border
-            let out = '┌' + '─'.repeat(W) + '┐\n';
+            // Build output with colors
+            let out = '<span style="color:#666">┌' + '─'.repeat(W) + '┐</span>\n';
             for (let y = 0; y < H; y++) {
-                out += '│' + g[y].join('') + '│\n';
+                out += '<span style="color:#666">│</span>';
+                for (let x = 0; x < W; x++) {
+                    const c = colors[y][x];
+                    if (c) {
+                        out += `<span class="${c}">${g[y][x]}</span>`;
+                    } else {
+                        out += g[y][x];
+                    }
+                }
+                out += '<span style="color:#666">│</span>\n';
             }
-            out += '└' + '─'.repeat(W) + '┘';
+            out += '<span style="color:#666">└' + '─'.repeat(W) + '┘</span>';
             
-            document.getElementById('game').textContent = out;
+            document.getElementById('game').innerHTML = out;
         }
         
         ws.onclose = () => {
-            document.getElementById('game').textContent = 'DISCONNECTED - Refresh to reconnect';
+            document.getElementById('game').innerHTML = '<span style="color:#f00">DISCONNECTED - Refresh to reconnect</span>';
         };
     </script>
 </body>

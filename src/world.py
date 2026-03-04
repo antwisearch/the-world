@@ -5,6 +5,8 @@ World - Modular world with resources and buildings
 import random
 from src.resources import spawn_resource, spawn_initial_resources
 from src.events import trigger_random_event
+from src.history import WorldHistory
+from src.artifacts import ArtifactManager, ArtifactGenerator
 
 
 class World:
@@ -34,6 +36,12 @@ class World:
         
         # Era
         self.era = 'settlement'
+        
+        # World History
+        self.history = WorldHistory()
+        
+        # Artifacts
+        self.artifacts = ArtifactManager()
         
         # Spawn initial resources
         spawn_initial_resources(self)
@@ -90,8 +98,39 @@ class World:
         # Remove dead
         dead = [a for a in self.agents if not a.alive]
         for agent in dead:
+            # Record death properly
+            if agent.needs['food'] <= 0:
+                cause = 'starvation'
+            elif agent.needs['water'] <= 0:
+                cause = 'dehydration'
+            else:
+                cause = 'violence'  # Default
+            
+            # Record in biography
+            agent.biography.record_death(agent.age, cause, 
+                                         {'x': agent.x, 'y': agent.y})
+            
+            # Generate artifacts from dead agent
+            new_artifacts = ArtifactGenerator.generate_from_agent(agent)
+            for art in new_artifacts:
+                art.x = agent.x + random.uniform(-10, 10)
+                art.y = agent.y + random.uniform(-10, 10)
+                self.artifacts.add_artifact(art)
+            
+            # Record in world history
+            obituary = agent.biography.generate_obituary()
+            if obituary:
+                self.log_event(obituary)
+            
+            # Check for legendary death
+            is_legendary = (agent.biography.kills > 5 or 
+                          agent.biography.buildings_built > 5)
+            self.history.record_death(agent.biography.name, cause, is_legendary)
+            
             self.remove_agent(agent)
-            self.log_event(f"Agent died (age: {agent.age:.1f}, jobs: {agent.jobs_done})")
+        
+        # Advance world time
+        self.history.advance_year()
         
         # Spawn resources
         self.spawn_more_resources()
@@ -113,5 +152,7 @@ class World:
             'buildings': self.buildings,
             'water_sources': self.water_sources,
             'agents_count': len([a for a in self.agents if a.alive]),
-            'events': self.events[-10:]
+            'events': self.events[-10:],
+            'history': self.history.to_dict(),
+            'artifacts': self.artifacts.to_dict()
         }

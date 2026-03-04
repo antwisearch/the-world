@@ -47,12 +47,21 @@ class Civilization:
                 from src.agent import Agent
                 baby = Agent(baby_x, baby_y, baby_genome)
                 baby.generation = agent.generation + 1
+                baby.biography.parents = [agent.biography.name]
                 
                 # Take food from parent
                 agent.inventory['food'] -= 10
+                agent.biography.children.append(baby.biography.name)
+                
+                # Add to family
+                if agent.biography.children:
+                    baby.biography.personality_traits = agent.biography.personality_traits[:2]
                 
                 self.world.add_agent(baby)
-                self.world.log_event(f"Born! Agent {len(self.world.agents)} (generation {baby.generation})")
+                
+                # Record in history
+                self.world.history.record_birth(baby.biography.name)
+                self.world.log_event(f"👶 {baby.biography.name} born to {agent.biography.name}!")
     
     def check_immigration(self):
         """New agents join the settlement"""
@@ -68,7 +77,10 @@ class Civilization:
             new_agent.needs['food'] = 50
             new_agent.needs['happiness'] = 60
             self.world.add_agent(new_agent)
-            self.world.log_event(f"New arrival! Agent {len(self.world.agents)}")
+            
+            # Record in history
+            self.world.history.record_birth(new_agent.biography.name)
+            self.world.log_event(f"🚶 {new_agent.biography.name} has joined the settlement!")
     
     def check_deaths(self):
         """Log deaths"""

@@ -6,6 +6,8 @@ import random
 from src.jobs import get_job, JOBS
 from src.resources import get_resource
 from src.behaviors import agent_think
+from src.biography import Biography
+from src.names import generate_full_name
 
 
 class Agent:
@@ -22,6 +24,9 @@ class Agent:
             self.genome = genome
         else:
             self.genome = self.random_genome()
+        
+        # Biography - name, life story, family
+        self.biography = Biography(x, y, self.generation)
         
         # Position
         self.position = {'x': x, 'y': y}
@@ -141,6 +146,7 @@ class Agent:
     
     def get_state(self):
         return {
+            'name': self.biography.name,
             'position': self.position,
             'alive': self.alive,
             'needs': self.needs,
@@ -148,5 +154,6 @@ class Agent:
             'skills': self.skills,
             'inventory': self.inventory,
             'generation': self.generation,
-            'fitness': self.fitness
+            'fitness': self.fitness,
+            'personality': self.biography.personality_traits
         }
