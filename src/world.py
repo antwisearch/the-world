@@ -11,6 +11,8 @@ from src.legends import LegendsManager
 from src.event_chains import setup_event_chains, check_for_chain
 from src.terrain import TerrainGenerator
 from src.biomes import BiomeResourceManager
+from src.relationships import RelationshipManager
+from src.more_events import EVENTS as MORE_EVENTS
 
 
 class World:
@@ -59,6 +61,9 @@ class World:
         # Biome-based resources
         self.biome_manager = BiomeResourceManager(self)
         
+        # Relationships
+        self.relationships = RelationshipManager()
+        
         # Spawn initial resources
         spawn_initial_resources(self)
         
@@ -84,6 +89,11 @@ class World:
         """Update world"""
         # Trigger random events
         event_result = trigger_random_event(self)
+        
+        # Trigger more events (lower chance)
+        if random.random() < 0.001:  # 0.1% chance per tick
+            more_event = random.choice(MORE_EVENTS)
+            more_event.apply(self)
         
         # Check for event chains
         if event_result:
@@ -186,5 +196,6 @@ class World:
             'history': self.history.to_dict(),
             'artifacts': self.artifacts.to_dict(),
             'legends': self.legends.to_dict(),
-            'biome': self.biome_manager.get_biome_at(self.width/2, self.height/2) if hasattr(self, 'biome_manager') else 'unknown'
+            'biome': self.biome_manager.get_biome_at(self.width/2, self.height/2) if hasattr(self, 'biome_manager') else 'unknown',
+            'relationships': self.relationships.to_dict()
         }
