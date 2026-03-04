@@ -184,6 +184,20 @@ class World:
             self.events = self.events[-100:]
     
     def get_state(self):
+        # Sample biomes across the map
+        biome_samples = {}
+        if hasattr(self, 'biome_manager'):
+            sample_points = [
+                (self.width * 0.25, self.height * 0.25),
+                (self.width * 0.75, self.height * 0.75),
+                (self.width * 0.5, self.height * 0.5),
+                (self.width * 0.25, self.height * 0.75),
+                (self.width * 0.75, self.height * 0.25),
+            ]
+            for x, y in sample_points:
+                biome = self.biome_manager.get_biome_at(x, y)
+                biome_samples[biome] = biome_samples.get(biome, 0) + 1
+        
         return {
             'width': self.width,
             'height': self.height,
@@ -196,6 +210,7 @@ class World:
             'history': self.history.to_dict(),
             'artifacts': self.artifacts.to_dict(),
             'legends': self.legends.to_dict(),
-            'biome': self.biome_manager.get_biome_at(self.width/2, self.height/2) if hasattr(self, 'biome_manager') else 'unknown',
+            'biome': list(biome_samples.keys())[0] if biome_samples else 'unknown',
+            'biomes': list(biome_samples.keys()),
             'relationships': self.relationships.to_dict()
         }

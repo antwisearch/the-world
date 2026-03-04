@@ -196,12 +196,36 @@ async def get_events():
 
 
 @app.post("/save")
-async def save_simulation(filename: str = "save.json"):
+async def save_simulation(filename: str = "savegame"):
     with state_lock:
         try:
-            return {'success': True, 'filename': filename}
+            from src.save_manager import SaveManager
+            filepath = SaveManager.save_game(world, filename)
+            return {'success': True, 'filename': filepath}
         except Exception as e:
             return {'error': str(e)}
+
+
+@app.get("/load/{filename}")
+async def load_simulation(filename: str = "savegame"):
+    with state_lock:
+        try:
+            from src.save_manager import SaveManager
+            save_data = SaveManager.load_game(filename)
+            if save_data is None:
+                return {'error': 'Save file not found'}
+            return save_data
+        except Exception as e:
+            return {'error': str(e)}
+
+
+@app.get("/saves")
+async def list_saves():
+    try:
+        from src.save_manager import SaveManager
+        return {'saves': SaveManager.list_saves()}
+    except Exception as e:
+        return {'error': str(e), 'saves': []}
 
 
 # Start server

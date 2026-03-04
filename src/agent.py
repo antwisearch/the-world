@@ -163,17 +163,13 @@ class Agent:
     
     def _build_emergency_shelter(self, world):
         """Build shelter in emergency"""
-        from src.buildings import Building
-        
         # Check if we have resources
         if self.inventory.get('wood', 0) >= 10:
-            building = Building(
-                x=self.x + random.uniform(-10, 10),
-                y=self.y + random.uniform(-10, 10),
-                building_type='shelter'
-            )
-            building.builder = self.biography.name
-            world.buildings.append(building)
+            # Add a simple shelter marker
+            from src.buildings import Shelter
+            building = Shelter()
+            building.x = self.x + random.uniform(-10, 10)
+            building.y = self.y + random.uniform(-10, 10)
             self.home = building
             self.inventory['wood'] -= 10
             self.biography.buildings_built += 1

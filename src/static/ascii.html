@@ -152,6 +152,11 @@
                 <div><span class="c-food">*</span> = food <span class="c-tree">T</span> = tree</div>
                 <div><span class="c-stone">O</span> = stone <span class="c-ore">#</span> = ore</div>
                 <div><span class="c-water">~</span> = water <span class="c-shelter">[#]</span> = shelter</div>
+                <div class="legend-title" style="margin-top:8px">BIOMES</div>
+                <div><span style="color:#00ff00">G</span> = grassland</div>
+                <div><span style="color:#006400">F</span> = forest <span style="color:#8B4513">D</span> = desert</div>
+                <div><span style="color:#4169e1">J</span> = jungle <span style="color:#add8e6">T</span> = tundra</div>
+                <div><span style="color:#f0f8ff">S</span> = snow <span style="color:#556b2f">W</span> = swamp</div>
             </div>
         </div>
     </div>
@@ -203,7 +208,8 @@
             
             // Biome
             const biome = world.biome || 'unknown';
-            document.getElementById('biome').textContent = biome;
+            const biomes = world.biomes || [];
+            document.getElementById('biome').textContent = biomes.length > 0 ? biomes.join(', ') : biome;
             
             // Agent list with names
             const agentsList = document.getElementById('agents');
