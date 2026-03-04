@@ -9,6 +9,8 @@ from src.history import WorldHistory
 from src.artifacts import ArtifactManager, ArtifactGenerator
 from src.legends import LegendsManager
 from src.event_chains import setup_event_chains, check_for_chain
+from src.terrain import TerrainGenerator
+from src.biomes import BiomeResourceManager
 
 
 class World:
@@ -51,8 +53,17 @@ class World:
         # Event chains
         setup_event_chains()
         
+        # Terrain generation
+        self.terrain = TerrainGenerator(width, height)
+        
+        # Biome-based resources
+        self.biome_manager = BiomeResourceManager(self)
+        
         # Spawn initial resources
         spawn_initial_resources(self)
+        
+        # Initialize biome resources
+        self.biome_manager.spawn_biome_resources()
     
     def spawn_more_resources(self):
         """Spawn more resources over time"""
@@ -174,5 +185,6 @@ class World:
             'events': self.events[-10:],
             'history': self.history.to_dict(),
             'artifacts': self.artifacts.to_dict(),
-            'legends': self.legends.to_dict()
+            'legends': self.legends.to_dict(),
+            'biome': self.biome_manager.get_biome_at(self.width/2, self.height/2) if hasattr(self, 'biome_manager') else 'unknown'
         }

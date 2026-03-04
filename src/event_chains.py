@@ -81,14 +81,12 @@ class RaiderAftermath:
     """After raiders, maybe fortify"""
     @classmethod
     def apply(cls, world):
-        from src.buildings import Building
-        # Chance to add a guard post
+        from src.buildings import Watchtower
+        # Chance to add a watchtower
         if random.random() < 0.3:
-            building = Building(
-                x=random.uniform(100, world.width-100),
-                y=random.uniform(100, world.height-100),
-                building_type='watchtower'
-            )
+            building = Watchtower()
+            building.x = random.uniform(100, world.width-100)
+            building.y = random.uniform(100, world.height-100)
             world.buildings.append(building)
             world.log_event("🏰 A watchtower was built after the raid!")
         return {'aftermath': 'fortified'}
