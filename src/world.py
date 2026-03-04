@@ -7,6 +7,8 @@ from src.resources import spawn_resource, spawn_initial_resources
 from src.events import trigger_random_event
 from src.history import WorldHistory
 from src.artifacts import ArtifactManager, ArtifactGenerator
+from src.legends import LegendsManager
+from src.event_chains import setup_event_chains, check_for_chain
 
 
 class World:
@@ -43,6 +45,12 @@ class World:
         # Artifacts
         self.artifacts = ArtifactManager()
         
+        # Legends system
+        self.legends = LegendsManager()
+        
+        # Event chains
+        setup_event_chains()
+        
         # Spawn initial resources
         spawn_initial_resources(self)
     
@@ -64,7 +72,13 @@ class World:
     def update(self, dt):
         """Update world"""
         # Trigger random events
-        trigger_random_event(self)
+        event_result = trigger_random_event(self)
+        
+        # Check for event chains
+        if event_result:
+            event_name = list(event_result.keys())[0] if event_result else None
+            if event_name:
+                chain_result = check_for_chain(self, event_name)
         
         # Update raiders
         if hasattr(self, 'raiders'):
@@ -105,6 +119,11 @@ class World:
                 cause = 'dehydration'
             else:
                 cause = 'violence'  # Default
+            
+            # Check if should become a legend
+            legend = self.legends.check_agent(agent, self.history.year)
+            if legend:
+                self.log_event(f"📜 {agent.biography.name} has become a legend!")
             
             # Record in biography
             agent.biography.record_death(agent.age, cause, 
@@ -154,5 +173,6 @@ class World:
             'agents_count': len([a for a in self.agents if a.alive]),
             'events': self.events[-10:],
             'history': self.history.to_dict(),
-            'artifacts': self.artifacts.to_dict()
+            'artifacts': self.artifacts.to_dict(),
+            'legends': self.legends.to_dict()
         }

@@ -8,6 +8,7 @@ from src.resources import get_resource
 from src.behaviors import agent_think
 from src.biography import Biography
 from src.names import generate_full_name
+from src.utility_ai import BehaviorTree, UtilityScore
 
 
 class Agent:
@@ -102,16 +103,86 @@ class Agent:
             self.needs[need] = max(0, min(100, self.needs[need]))
     
     def do_job(self, world):
-        """Perform job - uses AI behavior then job system"""
+        """Perform job - uses Behavior Tree for decisions"""
         if not self.alive:
             return
         
-        # AI thinks first
-        state = agent_think(self, world)
+        # Use Behavior Tree for priority decisions
+        action, priority = BehaviorTree.evaluate(self, world)
         
-        # Then do job
+        # Handle critical needs first
+        if action == 'find_food':
+            self._find_food(world)
+            return
+        elif action == 'find_water':
+            self._find_water(world)
+            return
+        elif action == 'build_shelter':
+            self._build_emergency_shelter(world)
+            return
+        
+        # Then do normal job
         job_class = get_job(self.job)
         job_class.do_job(self, world)
+    
+    def _find_food(self, world):
+        """Emergency food finding"""
+        # Look for food
+        for resource in world.resources:
+            if resource['type'] == 'food':
+                self.move_towards(resource['x'], resource['y'], world)
+                if ((self.x - resource['x'])**2 + (self.y - resource['y'])**2)**0.5 < 5:
+                    self.inventory['food'] = self.inventory.get('food', 0) + resource.get('amount', 1)
+                    world.resources.remove(resource)
+                    self.eat()
+                    self.biography.achievements.append("found food in emergency")
+                    return
+        
+        # Hunt if no food found
+        self.job = 'hunter'
+        job_class = get_job('hunter')
+        job_class.do_job(self, world)
+    
+    def _find_water(self, world):
+        """Emergency water finding"""
+        for water in world.water_sources:
+            dx = water['x'] - self.x
+            dy = water['y'] - self.y
+            dist = (dx*dx + dy*dy) ** 0.5
+            
+            if dist < water.get('radius', 50):
+                self.needs['water'] = min(100, self.needs['water'] + 50)
+                self.biography.achievements.append("found water in emergency")
+                return
+        
+        # Move toward nearest water
+        if world.water_sources:
+            nearest = min(world.water_sources, key=lambda w: 
+                (w['x']-self.x)**2 + (w['y']-self.y)**2)
+            self.move_towards(nearest['x'], nearest['y'], world)
+    
+    def _build_emergency_shelter(self, world):
+        """Build shelter in emergency"""
+        from src.buildings import Building
+        
+        # Check if we have resources
+        if self.inventory.get('wood', 0) >= 10:
+            building = Building(
+                x=self.x + random.uniform(-10, 10),
+                y=self.y + random.uniform(-10, 10),
+                building_type='shelter'
+            )
+            building.builder = self.biography.name
+            world.buildings.append(building)
+            self.home = building
+            self.inventory['wood'] -= 10
+            self.biography.buildings_built += 1
+            self.biography.achievements.append("built emergency shelter")
+        else:
+            # Gather wood first
+            self.job = 'builder'
+            job_class = get_job('builder')
+            job_class.do_job(self, world)
     
     def move_towards(self, target_x, target_y, world):
         """Move towards target"""

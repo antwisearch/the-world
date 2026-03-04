@@ -133,6 +133,10 @@
                 <div class="stat-value" id="artifacts">0</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">LEGENDS</div>
+                <div class="stat-value" id="legends">0</div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">EVENT LOG</div>
                 <div class="events" id="events"></div>
             </div>
@@ -188,6 +192,10 @@
             // Artifacts
             const artifacts = world.artifacts || {};
             document.getElementById('artifacts').textContent = artifacts.total || 0;
+            
+            // Legends
+            const legends = world.legends || {};
+            document.getElementById('legends').textContent = legends.total_legends || 0;
             
             // Agent list with names
             const agentsList = document.getElementById('agents');
