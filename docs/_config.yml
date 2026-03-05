@@ -1,0 +1,11 @@
+title: The World
+description: A Dwarf Fortress-style colony simulation where AI agents create emergent stories
+theme: jekyll-theme-minimal
+
+markdown: kramdown
+
+collections:
+  docs:
+    output: true
+
+permalink: /:title/

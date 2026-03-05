@@ -1,122 +1,113 @@
-# The World - Dwarf Fortress Style Colony Simulation
+# The World
 
-A procedural colony simulation where AI agents live, work, and create emergent stories.
+A Dwarf Fortress-style colony simulation where AI agents live, work, and create emergent stories.
+
+![Python](https://img.shields.io/badge/python-3.12+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Quick Start
 
 ```bash
-cd biological-chaos
+# Clone and run
+git clone https://github.com/antwisearch/the-world.git
+cd the-world
 source venv/bin/activate
 python -m src.api
 ```
 
-Then open http://localhost:8080 in your browser.
+Open http://localhost:8080 in your browser.
+
+## What is The World?
+
+The World is a procedural colony simulation where:
+- AI agents have needs (food, water, shelter, happiness)
+- Agents have jobs (gatherer, builder, hunter, farmer, trader, guard)
+- Agents gain skills and can become legendary
+- The world generates biomes, resources, and events
+- Stories emerge from the simulation
+
+## Features
+
+### 🤖 AI Agents
+- Named agents with Dwarf Fortress-style names
+- Biographies tracking life history
+- Relationship system (family, friends, enemies)
+- Behavior Trees and Utility AI for decision making
+- GOAP for multi-step planning
+
+### 🌍 Procedural World
+- Perlin noise terrain generation
+- 8 biome types (grassland, forest, desert, tundra, snow, jungle, swamp, savanna)
+- Biome-specific resources
+- A* pathfinding
+
+### 📜 Emergent Storytelling
+- Death records with causes
+- Legends system
+- World history timeline
+- Event chains (raiders → fortifications)
+- Romance, feuds, festivals, battles
+
+### 💰 Economy
+- Market with dynamic pricing
+- Trade between agents
+- Wealth accumulation
+
+### 💾 Save/Load
+- Save game state to JSON
+- Load saved games
 
 ## Architecture
 
-### Core Modules
-
-| File | Purpose |
-|------|---------|
-| `world.py` | Main simulation loop, manages agents/resources/buildings |
-| `agent.py` | Individual agents with needs, jobs, skills |
-| `civilization.py` | Population management, births, immigration |
-| `api.py` | FastAPI server with WebSocket streaming |
-
-### AI & Behavior
-
-| File | Purpose |
-|------|---------|
-| `utility_ai.py` | Behavior Trees, Utility AI for decisions |
-| `pathfinding.py` | A* pathfinding |
-| `behaviors.py` | Legacy AI behaviors |
-
-### Generation
-
-| File | Purpose |
-|------|---------|
-| `terrain.py` | Perlin noise, biome generation |
-| `biomes.py` | Biome-specific resources, quest system |
-| `names.py` | Dwarf Fortress-style name generation |
-
-### Systems
-
-| File | Purpose |
-|------|---------|
-| `biography.py` | Agent life stories, achievements |
-| `history.py` | World timeline, historical events |
-| `legends.py` | Legendary figures |
-| `relationships.py` | Family, friends, enemies |
-| `artifacts.py` | Items dropped by dead agents |
-| `events.py` | Random events (raiders, discoveries, etc.) |
-| `event_chains.py` | Events that trigger follow-up events |
-| `more_events.py` | Romance, feuds, festivals |
-
-### Data
-
-| File | Purpose |
-|------|---------|
-| `resources.py` | Resource types and spawning |
-| `buildings.py` | Building types (shelter, farm, workshop) |
-| `jobs.py` | Job behaviors (gatherer, builder, hunter, etc.) |
-
-### Infrastructure
-
-| File | Purpose |
-|------|---------|
-| `save_manager.py` | Save/load game state |
-| `websocket.py` | WebSocket handling |
+```
+src/
+├── agent.py          # Agent class
+├── api.py            # FastAPI server
+├── biomes.py         # Biome resources
+├── buildings.py      # Building types
+├── civilization.py   # Population management
+├── config.py        # Game settings
+├── economy.py       # Trade & wealth
+├── events.py        # Random events
+├── goap.py         # Goal-oriented action planning
+├── history.py       # World timeline
+├── legends.py       # Legendary figures
+├── names.py        # Name generation
+├── relationships.py # Family & friends
+├── terrain.py      # Perlin noise terrain
+└── utility_ai.py  # Behavior Trees
+```
 
 ## API Endpoints
 
-- `GET /` - ASCII viewer
-- `GET /world` - World state
-- `GET /civilization` - Civ stats
-- `GET /agents` - Agent list
-- `GET /events` - Event log
-- `POST /save` - Save game
-- `GET /ws` - WebSocket stream
-
-## Game Concepts
-
-### Agents
-- Have needs: food, water, shelter, happiness
-- Have jobs: gatherer, builder, hunter, farmer, trader, guard
-- Gain skills through work
-- Can become legends
-
-### World
-- Procedural biomes (grassland, forest, desert, tundra, etc.)
-- Resources spawn based on biome
-- Random events create stories
-- History recorded over time
-
-### Emergent Stories
-- Named agents with biographies
-- Causes of death tracked
-- Legends remembered
-- Events chain into storylines
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | ASCII game viewer |
+| `/world` | GET | World state |
+| `/agents` | GET | Agent list |
+| `/events` | GET | Event log |
+| `/save` | POST | Save game |
+| `/ws` | WS | Real-time updates |
 
 ## Tech Stack
 
-- Python 3.12
-- FastAPI (web server)
-- WebSocket (real-time streaming)
-- No external game engine - pure Python
-
-## Legacy Files
-
-The following files are from older versions and not currently used:
-- `creature.py` - Old creature system
-- `evolution.py` - Old evolution system
-- `brain.py` - Legacy AI
-- `renderer.py` - Old renderer
-- `environment.py` - Old environment
-- `save.py` - Old save system
+- **Python 3.12**
+- **FastAPI** - Web server
+- **WebSocket** - Real-time streaming
+- **No external game engine** - Pure Python
 
 ## Contributing
 
-1. Check GitHub issues
-2. Make changes in a branch
-3. Submit PR
-4. Test locally first
+1. Fork the repo
+2. Create a branch
+3. Make changes
+4. Submit PR
+
+## License
+
+MIT
+
+## Links
+
+- [GitHub](https://github.com/antwisearch/the-world)
+- [Issues](https://github.com/antwisearch/the-world/issues)
