@@ -9,6 +9,7 @@ from src.behaviors import agent_think
 from src.biography import Biography
 from src.names import generate_full_name
 from src.utility_ai import BehaviorTree, UtilityScore
+from src.goap import plan_for_goal
 
 
 class Agent:
@@ -19,6 +20,9 @@ class Agent:
         self.y = y
         self.alive = True
         self.generation = 1
+        
+        # Wealth
+        self.wealth = random.randint(0, 20)
         
         # Genome / traits
         if genome:
@@ -40,7 +44,7 @@ class Agent:
             'happiness': 70
         }
         
-        # Job assignment
+        # Job assignment - use best job
         self.job = random.choice(list(JOBS.keys()))
         
         # Skills (0-100)
@@ -220,6 +224,7 @@ class Agent:
             'job': self.job,
             'skills': self.skills,
             'inventory': self.inventory,
+            'wealth': self.wealth,
             'generation': self.generation,
             'fitness': self.fitness,
             'personality': self.biography.personality_traits

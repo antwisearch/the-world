@@ -12,6 +12,8 @@ from src.event_chains import setup_event_chains, check_for_chain
 from src.terrain import TerrainGenerator
 from src.biomes import BiomeResourceManager
 from src.relationships import RelationshipManager
+from src.goap import GOAPAgent, plan_for_goal
+from src.economy import Economy
 from src.more_events import EVENTS as MORE_EVENTS
 
 
@@ -64,6 +66,9 @@ class World:
         # Relationships
         self.relationships = RelationshipManager()
         
+        # Economy
+        self.economy = Economy(self)
+        
         # Spawn initial resources
         spawn_initial_resources(self)
         
@@ -87,6 +92,9 @@ class World:
     
     def update(self, dt):
         """Update world"""
+        # Economy
+        self.economy.tick()
+        
         # Trigger random events
         event_result = trigger_random_event(self)
         
@@ -212,5 +220,6 @@ class World:
             'legends': self.legends.to_dict(),
             'biome': list(biome_samples.keys())[0] if biome_samples else 'unknown',
             'biomes': list(biome_samples.keys()),
-            'relationships': self.relationships.to_dict()
+            'relationships': self.relationships.to_dict(),
+            'economy': self.economy.to_dict()
         }

@@ -141,6 +141,10 @@
                 <div class="stat-value" id="biome">unknown</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">WEALTH</div>
+                <div class="stat-value" id="wealth">0</div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">EVENT LOG</div>
                 <div class="events" id="events"></div>
             </div>
@@ -210,6 +214,10 @@
             const biome = world.biome || 'unknown';
             const biomes = world.biomes || [];
             document.getElementById('biome').textContent = biomes.length > 0 ? biomes.join(', ') : biome;
+            
+            // Economy
+            const economy = world.economy || {};
+            document.getElementById('wealth').textContent = economy.total_wealth || 0;
             
             // Agent list with names
             const agentsList = document.getElementById('agents');
