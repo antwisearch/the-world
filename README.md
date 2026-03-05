@@ -1,125 +1,122 @@
-# The World
+# The World - Dwarf Fortress Style Colony Simulation
 
-A co-evolution simulation where AI agents shape their environment, and the environment shapes what creatures evolve.
-
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![Box2D](https://img.shields.io/badge/Box2D-Physics-green)
-
-## Concept
-
-**The World** is not just an arena - it's a living, changing ecosystem. AI agents control soft-body creatures that:
-
-1. **Shape the world** - Build structures, start fires, modify terrain
-2. **Adapt to the world** - Evolution selects for traits matching current world state
-3. **Go through eras** - Primordial → Age of Fire → Ice Age → Urban → Collapse
-
-The world responds to collective agent behavior. Enough fires? The world enters the **Age of Fire**. Build 100 structures? Enter the **Urban** era.
+A procedural colony simulation where AI agents live, work, and create emergent stories.
 
 ## Quick Start
 
 ```bash
-# Clone
-git clone https://github.com/antwisearch/the-world.git
-cd the-world
-
-# Create and activate virtual environment
-python3 -m venv venv
+cd biological-chaos
 source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-pip install box2d
-
-# Run server
-python -m src.main
+python -m src.api
 ```
 
-Open http://localhost:8080 to view.
-
-## Resume Development
-
-```bash
-cd the-world
-source venv/bin/activate
-python -m src.main
-```
-
-## How It Works
-
-### The World State
-- Climate zones (hot, temperate, cold)
-- Weather events (rain, drought, fire, flood)
-- Era that shifts based on agent collective action
-- Terrain with elevation and structures
-
-### Evolution
-Creatures evolve traits based on world conditions:
-- Fire world → fire-resistant creatures
-- Cold world → cold-hardy creatures  
-- Urban world → spatial intelligence
-- Scarcity → efficient metabolisms
-
-### Eras
-| Era | Trigger | World |
-|-----|---------|-------|
-| Primordial | Start | Warm, abundant |
-| Age of Fire | 50 fires | Hot, dangerous |
-| Ice Age | Temp < 0 | Frozen |
-| Urban | 100 structures | Built environment |
-| Collapse | 200+ fires | Harsh, scarce |
-
-## API
-
-```python
-import requests
-
-# Register
-resp = requests.post('http://localhost:8080/agent/register', json={'agent_id': 'my_agent'})
-
-# See what your creature perceives (world state + local environment)
-perception = requests.get('http://localhost:8080/agent/my_agent/perceive').json()
-
-# Act
-requests.post('http://localhost:8080/agent/my_agent/act', json={
-    'move': (1, 0.5),
-    'contract': 0.3,
-    'build': 'wall'  # Optional world modification
-})
-```
+Then open http://localhost:8080 in your browser.
 
 ## Architecture
 
-```
-src/
-├── main.py      # Server entry
-├── world.py     # World state + climate
-├── creature.py  # Soft body + genome
-├── physics.py   # Box2D wrapper
-├── climate.py   # Weather system
-├── terrain.py   # Elevation + structures
-├── evolution.py # World-guided evolution
-├── api.py       # FastAPI server
-└── agent.py     # Agent connection
-```
+### Core Modules
 
-## The Vision
+| File | Purpose |
+|------|---------|
+| `world.py` | Main simulation loop, manages agents/resources/buildings |
+| `agent.py` | Individual agents with needs, jobs, skills |
+| `civilization.py` | Population management, births, immigration |
+| `api.py` | FastAPI server with WebSocket streaming |
 
-Watch as:
-- Different climates produce different creature species
-- Creatures evolve to exploit new niches
-- Agent societies build and destroy
-- The world goes through epochs
-- Intelligence emerges from chaos
+### AI & Behavior
 
-This is not a game you play - it's a world you observe and influence.
+| File | Purpose |
+|------|---------|
+| `utility_ai.py` | Behavior Trees, Utility AI for decisions |
+| `pathfinding.py` | A* pathfinding |
+| `behaviors.py` | Legacy AI behaviors |
+
+### Generation
+
+| File | Purpose |
+|------|---------|
+| `terrain.py` | Perlin noise, biome generation |
+| `biomes.py` | Biome-specific resources, quest system |
+| `names.py` | Dwarf Fortress-style name generation |
+
+### Systems
+
+| File | Purpose |
+|------|---------|
+| `biography.py` | Agent life stories, achievements |
+| `history.py` | World timeline, historical events |
+| `legends.py` | Legendary figures |
+| `relationships.py` | Family, friends, enemies |
+| `artifacts.py` | Items dropped by dead agents |
+| `events.py` | Random events (raiders, discoveries, etc.) |
+| `event_chains.py` | Events that trigger follow-up events |
+| `more_events.py` | Romance, feuds, festivals |
+
+### Data
+
+| File | Purpose |
+|------|---------|
+| `resources.py` | Resource types and spawning |
+| `buildings.py` | Building types (shelter, farm, workshop) |
+| `jobs.py` | Job behaviors (gatherer, builder, hunter, etc.) |
+
+### Infrastructure
+
+| File | Purpose |
+|------|---------|
+| `save_manager.py` | Save/load game state |
+| `websocket.py` | WebSocket handling |
+
+## API Endpoints
+
+- `GET /` - ASCII viewer
+- `GET /world` - World state
+- `GET /civilization` - Civ stats
+- `GET /agents` - Agent list
+- `GET /events` - Event log
+- `POST /save` - Save game
+- `GET /ws` - WebSocket stream
+
+## Game Concepts
+
+### Agents
+- Have needs: food, water, shelter, happiness
+- Have jobs: gatherer, builder, hunter, farmer, trader, guard
+- Gain skills through work
+- Can become legends
+
+### World
+- Procedural biomes (grassland, forest, desert, tundra, etc.)
+- Resources spawn based on biome
+- Random events create stories
+- History recorded over time
+
+### Emergent Stories
+- Named agents with biographies
+- Causes of death tracked
+- Legends remembered
+- Events chain into storylines
 
 ## Tech Stack
 
-- Python 3.10+
-- Box2D (physics)
-- FastAPI (agent API)
-- Pygame (optional visualization)
+- Python 3.12
+- FastAPI (web server)
+- WebSocket (real-time streaming)
+- No external game engine - pure Python
 
-## License
+## Legacy Files
 
-MIT
+The following files are from older versions and not currently used:
+- `creature.py` - Old creature system
+- `evolution.py` - Old evolution system
+- `brain.py` - Legacy AI
+- `renderer.py` - Old renderer
+- `environment.py` - Old environment
+- `save.py` - Old save system
+
+## Contributing
+
+1. Check GitHub issues
+2. Make changes in a branch
+3. Submit PR
+4. Test locally first

@@ -1,11 +1,33 @@
 """
-The World - AI Agent Evolution Simulator
+The World - Dwarf Fortress Style Colony Simulation
+
+A procedural colony sim where AI agents live, work, and create emergent stories.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
+# Core
 from src.world import World
-from src.creature import Creature
-from src.evolution import EvolutionEngine
+from src.agent import Agent
+from src.civilization import Civilization
 
-__all__ = ['World', 'Creature', 'EvolutionEngine']
+# AI
+from src.utility_ai import BehaviorTree, UtilityScore
+
+# Generation
+from src.terrain import TerrainGenerator, Biome
+from src.biomes import BiomeResourceManager
+from src.pathfinding import Pathfinder
+
+# Systems
+from src.history import WorldHistory
+from src.legends import LegendsManager
+from src.relationships import RelationshipManager
+from src.artifacts import ArtifactManager
+
+__all__ = [
+    'World', 'Agent', 'Civilization',
+    'BehaviorTree', 'UtilityScore',
+    'TerrainGenerator', 'Biome', 'BiomeResourceManager', 'Pathfinder',
+    'WorldHistory', 'LegendsManager', 'RelationshipManager', 'ArtifactManager'
+]

@@ -18,7 +18,6 @@ import asyncio
 from src.world import World
 from src.agent import Agent
 from src.civilization import Civilization
-from src.save import save_state, load_state
 
 # Create FastAPI app
 app = FastAPI(title="The World", description="Dwarf Fortress style colony simulation")
