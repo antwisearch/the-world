@@ -63,6 +63,9 @@ class WorldHistory:
         self.total_died = 0
         self.famous_battles = 0
         self.disasters = 0
+        
+        # Death causes tracking
+        self.death_causes = {}  # {'starvation': 5, 'violence': 10, ...}
     
     def add_entry(self, event_type, title, description, importance=1):
         """Add a historical entry"""
@@ -95,6 +98,9 @@ class WorldHistory:
         """Record a death"""
         self.total_died += 1
         
+        # Track death causes
+        self.death_causes[cause] = self.death_causes.get(cause, 0) + 1
+        
         entry = self.add_entry('death', f"Death of {agent_name}",
                               f"{agent_name} died of {cause}", 
                               5 if is_legendary else 2)
@@ -125,7 +131,8 @@ class WorldHistory:
             'total_died': self.total_died,
             'famous_battles': self.famous_battles,
             'disasters': self.disasters,
-            'legends': len(self.legends)
+            'legends': len(self.legends),
+            'death_causes': self.death_causes
         }
     
     def get_recent(self, count=10):

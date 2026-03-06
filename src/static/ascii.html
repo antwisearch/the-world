@@ -125,6 +125,10 @@
                 <div class="stat-value" id="year">0</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">SEASON</div>
+                <div class="stat-value" id="season">spring</div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">AGENTS</div>
                 <div class="agents" id="agents"></div>
             </div>
@@ -201,6 +205,10 @@
             // Year
             const history = data.history || {};
             document.getElementById('year').textContent = history.summary?.year || 0;
+            
+            // Season
+            const seasons = world.seasons || {};
+            document.getElementById('season').textContent = seasons.season || 'spring';
             
             // Artifacts
             const artifacts = world.artifacts || {};

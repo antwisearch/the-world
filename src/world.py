@@ -14,6 +14,7 @@ from src.biomes import BiomeResourceManager
 from src.relationships import RelationshipManager
 from src.goap import GOAPAgent, plan_for_goal
 from src.economy import Economy
+from src.seasons import SeasonManager
 from src.more_events import EVENTS as MORE_EVENTS
 
 
@@ -68,6 +69,9 @@ class World:
         
         # Economy
         self.economy = Economy(self)
+        
+        # Seasons
+        self.seasons = SeasonManager()
         
         # Spawn initial resources
         spawn_initial_resources(self)
@@ -221,5 +225,6 @@ class World:
             'biome': list(biome_samples.keys())[0] if biome_samples else 'unknown',
             'biomes': list(biome_samples.keys()),
             'relationships': self.relationships.to_dict(),
-            'economy': self.economy.to_dict()
+            'economy': self.economy.to_dict(),
+            'seasons': self.seasons.to_dict()
         }
