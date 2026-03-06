@@ -129,6 +129,10 @@
                 <div class="stat-value" id="season">spring</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">WEATHER</div>
+                <div class="stat-value" id="weather">clear</div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">AGENTS</div>
                 <div class="agents" id="agents"></div>
             </div>
@@ -209,6 +213,10 @@
             // Season
             const seasons = world.seasons || {};
             document.getElementById('season').textContent = seasons.season || 'spring';
+            
+            // Weather
+            const weather = world.weather || {};
+            document.getElementById('weather').textContent = weather.weather || 'clear';
             
             // Artifacts
             const artifacts = world.artifacts || {};
