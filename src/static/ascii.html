@@ -69,7 +69,23 @@
         }
         .legend-title { color: #555; margin-bottom: 3px; }
         
-        /* ASCII Colors */
+        /* Weather colors */
+        .weather-clear { color: #ffdd44; }
+        .weather-cloudy { color: #888888; }
+        .weather-rain { color: #4488ff; }
+        .weather-snow { color: #ffffff; }
+        .weather-storm { color: #aa44aa; }
+        
+        /* Season colors */
+        .season-spring { color: #44ff44; }
+        .season-summer { color: #ffaa00; }
+        .season-autumn { color: #ff6600; }
+        .season-winter { color: #88ccff; }
+        
+        /* Status indicators */
+        .status-good { color: #0a0; }
+        .status-warn { color: #aa0; }
+        .status-bad { color: #a00; }
         .c-water { color: #00aaff; }
         .c-tree { color: #00ff00; }
         .c-wood { color: #00cc00; }
@@ -212,11 +228,26 @@
             
             // Season
             const seasons = world.seasons || {};
-            document.getElementById('season').textContent = seasons.season || 'spring';
+            const seasonIcons = {
+                'spring': '🌸',
+                'summer': '☀️',
+                'autumn': '🍂',
+                'winter': '❄️'
+            };
+            const sIcon = seasonIcons[seasons.season] || '🌸';
+            document.getElementById('season').textContent = sIcon + ' ' + (seasons.season || 'spring');
             
             // Weather
             const weather = world.weather || {};
-            document.getElementById('weather').textContent = weather.weather || 'clear';
+            const weatherIcons = {
+                'clear': '☀️',
+                'cloudy': '☁️',
+                'rain': '🌧️',
+                'snow': '❄️',
+                'storm': '⛈️'
+            };
+            const wIcon = weatherIcons[weather.weather] || '☀️';
+            document.getElementById('weather').textContent = wIcon + ' ' + (weather.weather || 'clear');
             
             // Artifacts
             const artifacts = world.artifacts || {};
