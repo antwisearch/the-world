@@ -61,6 +61,12 @@
         .event.death { color: #a00; }
         .event.build { color: #0aa; }
         .event.trade { color: #aa0; }
+        .event.season { color: #0af; }
+        .event.weather { color: #aaf; }
+        .event.romance { color: #f0f; }
+        .event.combat { color: #f00; }
+        .event.festival { color: #fa0; }
+        .event.legendary { color: #fd0; font-weight: bold; }
         .legend {
             font-size: 9px;
             background: #0a0a0a;
@@ -135,6 +141,10 @@
             <div class="stat-box">
                 <div class="stat-label">BUILDINGS</div>
                 <div class="stat-value" id="buildings">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">RESOURCES</div>
+                <div class="stat-value" id="resources">0</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">YEAR</div>
@@ -221,6 +231,10 @@
             // Buildings
             const buildings = world.buildings || [];
             document.getElementById('buildings').textContent = buildings.length;
+            
+            // Resources
+            const resources = world.resources || [];
+            document.getElementById('resources').textContent = resources.length;
             
             // Year
             const history = data.history || {};
