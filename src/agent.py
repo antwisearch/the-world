@@ -82,12 +82,20 @@ class Agent:
             'aggression': random.uniform(0.1, 0.5)
         }
     
-    def update_needs(self, dt):
+    def update_needs(self, dt, world=None):
         """Update needs over time"""
         metabolism = self.genome.get('metabolism', 0.5)
         
         self.needs['food'] -= dt * 2 * metabolism
         self.needs['water'] -= dt * 3
+        
+        # Weather effects
+        weather_effects = {'happiness': 0, 'food_growth': 1.0, 'movement': 1.0}
+        if world and hasattr(world, 'weather'):
+            weather_effects = world.weather.get_effects()
+        
+        # Apply weather to happiness
+        self.needs['happiness'] += dt * weather_effects['happiness'] * 0.1
         
         # Shelter affects happiness
         if self.home:

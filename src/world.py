@@ -16,6 +16,7 @@ from src.goap import GOAPAgent, plan_for_goal
 from src.economy import Economy
 from src.seasons import SeasonManager
 from src.weather import WeatherManager
+from src.seasonal_events import SeasonalEventManager
 from src.more_events import EVENTS as MORE_EVENTS
 
 
@@ -77,6 +78,9 @@ class World:
         # Weather
         self.weather = WeatherManager()
         
+        # Seasonal events
+        self.seasonal_events = SeasonalEventManager()
+        
         # Spawn initial resources
         spawn_initial_resources(self)
         
@@ -102,6 +106,15 @@ class World:
         """Update world"""
         # Economy
         self.economy.tick()
+        
+        # Seasonal events
+        self.seasonal_events.tick(self)
+        
+        # Update seasons
+        self.seasons.tick()
+        
+        # Update weather based on season
+        self.weather.update(self.seasons.season)
         
         # Trigger random events
         event_result = trigger_random_event(self)
@@ -135,7 +148,7 @@ class World:
         # Update agents
         for agent in self.agents:
             if agent.alive:
-                agent.update_needs(dt)
+                agent.update_needs(dt, self)
                 agent.do_job(self)
                 
                 if agent.needs['food'] < 30:
