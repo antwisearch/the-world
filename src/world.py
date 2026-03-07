@@ -18,6 +18,7 @@ from src.seasons import SeasonManager
 from src.weather import WeatherManager
 from src.seasonal_events import SeasonalEventManager
 from src.more_events import EVENTS as MORE_EVENTS
+from src.trading import trade_manager, TradeManager, ITEMS
 
 
 class World:
@@ -68,6 +69,9 @@ class World:
         
         # Relationships
         self.relationships = RelationshipManager()
+        
+        # Trading
+        self.trading = trade_manager
         
         # Economy
         self.economy = Economy(self)

@@ -227,6 +227,56 @@ async def list_saves():
         return {'error': str(e), 'saves': []}
 
 
+# Trading endpoints
+@app.get("/trading/offers")
+async def get_offers():
+    """Get available trade offers"""
+    from src.trading import trade_manager
+    offers = []
+    for offer in trade_manager.get_available_offers():
+        offers.append({
+            'id': offer.id,
+            'seller': offer.seller,
+            'items_offering': offer.items_offering,
+            'items_wanted': offer.items_wanted,
+            'gold_offering': offer.gold_offering,
+            'gold_wanted': offer.gold_wanted,
+            'created_at': offer.created_at
+        })
+    return {'offers': offers}
+
+
+@app.get("/trading/market")
+async def get_market_prices():
+    """Get current market prices"""
+    from src.trading import trade_manager
+    return {'prices': trade_manager.market_prices}
+
+
+@app.get("/trading/history")
+async def get_trade_history():
+    """Get recent trades"""
+    from src.trading import trade_manager
+    trades = []
+    for trade in trade_manager.get_trade_history(20):
+        trades.append({
+            'id': trade.id,
+            'buyer': trade.buyer,
+            'seller': trade.seller,
+            'items': trade.items,
+            'gold': trade.gold,
+            'timestamp': trade.timestamp
+        })
+    return {'trades': trades}
+
+
+@app.get("/trading/items")
+async def get_trade_items():
+    """Get list of tradeable items"""
+    from src.trading import ITEMS
+    return {'items': ITEMS}
+
+
 # Start server
 def run_server(host="0.0.0.0", port=8080):
     # Initialize
