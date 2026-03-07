@@ -277,6 +277,27 @@ async def get_trade_items():
     return {'items': ITEMS}
 
 
+@app.get("/trading/traders")
+async def get_traders():
+    """Get active wandering traders"""
+    from src.trading import trade_manager
+    return {'traders': trade_manager.get_active_traders()}
+
+
+@app.get("/trading/shops")
+async def get_shops():
+    """Get all shops"""
+    from src.trading import trade_manager
+    return {'shops': trade_manager.get_shops()}
+
+
+@app.get("/trading/shops/near")
+async def get_shops_near(x: int, y: int, radius: int = 100):
+    """Get shops near a location"""
+    from src.trading import trade_manager
+    return {'shops': trade_manager.get_shops_near(x, y, radius)}
+
+
 # Start server
 def run_server(host="0.0.0.0", port=8080):
     # Initialize
