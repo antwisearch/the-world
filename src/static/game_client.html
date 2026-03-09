@@ -440,13 +440,17 @@
         }
         
         function updateUI() {
-            document.getElementById('connection-status').textContent = '● Connected';
-            document.getElementById('connection-status').className = 'connected';
-            document.getElementById('agent-count').textContent = agents.length;
-            document.getElementById('heartbeat-number').textContent = heartbeatNum;
-            if (worldState.max_ap) {
-                document.getElementById('max-ap').textContent = worldState.max_ap;
+            // Safely update elements that exist
+            const statusEl = document.getElementById('connection-status');
+            const countEl = document.getElementById('agent-count');
+            const hbEl = document.getElementById('heartbeat-number');
+            
+            if (statusEl) {
+                statusEl.textContent = '● Connected';
+                statusEl.className = 'connected';
             }
+            if (countEl) countEl.textContent = agents.length;
+            if (hbEl) hbEl.textContent = heartbeatNum;
             
             renderAgentList();
             renderWorldMap();
@@ -456,6 +460,8 @@
         
         function renderAgentList() {
             const list = document.getElementById('agent-list');
+            if (!list) return;
+            
             if (agents.length === 0) {
                 list.innerHTML = '<div style="color:#666;padding:20px;text-align:center;">No agents yet.<br>Agents will appear here when they join.</div>';
                 return;
@@ -491,6 +497,9 @@
         }
         
         function renderWorldMap() {
+            const mapEl = document.getElementById('world-map');
+            if (!mapEl) return;
+            
             const W = 50, H = 20;
             let grid = [];
             for (let y = 0; y < H; y++) {
@@ -525,7 +534,7 @@
                 html += '\n';
             }
             
-            document.getElementById('world-map').innerHTML = html;
+            mapEl.innerHTML = html;
         }
         
         function renderEvents() {
@@ -640,15 +649,21 @@
         }
         
         function renderStats() {
-            document.getElementById('stat-population').textContent = agents.length;
-            document.getElementById('stat-events').textContent = eventHistory.length;
+            const popEl = document.getElementById('stat-population');
+            const eventsEl = document.getElementById('stat-events');
+            
+            if (popEl) popEl.textContent = agents.length;
+            if (eventsEl) eventsEl.textContent = eventHistory.length;
             
             // Leaderboard
             const leaderboard = agents
                 .sort((a, b) => (b.total_actions || 0) - (a.total_actions || 0))
                 .slice(0, 10);
             
-            document.getElementById('leaderboard').innerHTML = `
+            const lbEl = document.getElementById('leaderboard');
+            if (!lbEl) return;
+            
+            lbEl.innerHTML = `
                 <div class="section-title">🏆 Leaderboard</div>
                 ${leaderboard.map((a, i) => `
                     <div class="agent-card" onclick="selectAgent('${a.id}')">
