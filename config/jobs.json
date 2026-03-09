@@ -1,0 +1,28 @@
+{
+  "jobs": {
+    "farmer": {
+      "base_skill": 20,
+      "xp_multiplier": 1.0
+    },
+    "hunter": {
+      "base_skill": 20,
+      "xp_multiplier": 1.0
+    },
+    "builder": {
+      "base_skill": 15,
+      "xp_multiplier": 1.2
+    },
+    "miner": {
+      "base_skill": 15,
+      "xp_multiplier": 1.2
+    },
+    "trader": {
+      "base_skill": 25,
+      "xp_multiplier": 1.0
+    },
+    "healer": {
+      "base_skill": 20,
+      "xp_multiplier": 1.1
+    }
+  }
+}

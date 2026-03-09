@@ -1,0 +1,17 @@
+{
+  "world": {
+    "width": 1200,
+    "height": 800,
+    "seed": "random"
+  },
+  "simulation": {
+    "tick_rate": 1.0,
+    "event_chance": 0.001,
+    "population_cap": 50
+  },
+  "difficulty": {
+    "resource_spawn_rate": 1.0,
+    "disease_chance": 0.01,
+    "raid_frequency": 0.001
+  }
+}
