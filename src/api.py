@@ -117,6 +117,194 @@ async def websocket_endpoint(websocket: WebSocket):
 async def serve_viewer():
     return FileResponse("src/static/ascii.html")
 
+# Serve chronicle (agent book)
+@app.get("/chronicle")
+async def serve_chronicle():
+    return FileResponse("src/static/chronicle.html")
+
+# Serve player dashboard
+@app.get("/player")
+async def serve_player():
+    return FileResponse("src/static/player.html")
+
+
+# Player actions
+@app.post("/action")
+async def player_action(data: dict):
+    try:
+        action = data.get('action', '')
+        
+        # Process actions
+        result = {"success": False, "message": "Unknown action"}
+        
+        # Get resources count
+        resources = world.resources if hasattr(world, 'resources') else []
+        res_count = {}
+        for r in resources:
+            res_count[r.type] = res_count.get(r.type, 0) + getattr(r, 'amount', 1)
+        
+        if action == 'recruit':
+            if res_count.get('food', 0) >= 20:
+                result = {"success": True, "message": "New settler recruited! (+1 population)"}
+            else:
+                result = {"success": False, "message": "Need 20 food to recruit"}
+        
+        elif action == 'build_shelter':
+            if res_count.get('wood', 0) >= 10:
+                result = {"success": True, "message": "Shelter construction started!"}
+            else:
+                result = {"success": False, "message": "Need 10 wood to build shelter"}
+        
+        elif action == 'build_farm':
+            if res_count.get('wood', 0) >= 15:
+                result = {"success": True, "message": "Farm construction started!"}
+            else:
+                result = {"success": False, "message": "Need 15 wood to build farm"}
+        
+        elif action == 'gather':
+            result = {"success": True, "message": "Gathering resources... (+5 wood, +3 food)"}
+        
+        elif action == 'mine':
+            result = {"success": True, "message": "Mining... (+2 ore, +1 stone)"}
+        
+        elif action == 'trade':
+            result = {"success": True, "message": "Trading post ready!"}
+        
+        return result
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+# Create player's agent
+player_agent = None
+
+@app.post("/create_agent")
+async def create_player_agent(data: dict):
+    global player_agent
+    try:
+        name = data.get('name', 'Player')
+        job = data.get('job', 'gatherer')
+        
+        # Create agent
+        from src.agent import Agent
+        import random
+        
+        agent = Agent(
+            random.uniform(100, 1100),
+            random.uniform(100, 700)
+        )
+        agent.job = job
+        agent.biography.name = name
+        agent.is_player = True  # Mark as player's agent
+        
+        # Add to world
+        with state_lock:
+            world.agents.append(agent)
+            player_agent = agent
+        
+        return {
+            "success": True,
+            "message": f"{name} has entered the world!",
+            "agent": {
+                "name": name,
+                "job": job,
+                "position": {"x": agent.x, "y": agent.y}
+            }
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@app.get("/my_agent")
+async def get_player_agent():
+    global player_agent
+    if player_agent is None:
+        return {"success": False, "message": "No player agent yet. Create one first!"}
+    
+    try:
+        with state_lock:
+            if hasattr(player_agent, 'get_state'):
+                state = player_agent.get_state()
+                state['is_player'] = True
+                return {"success": True, "agent": state}
+            else:
+                return {"success": False, "message": "Agent not found"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@app.post("/command")
+async def command_agent(data: dict):
+    global player_agent
+    if player_agent is None:
+        return {"success": False, "message": "No player agent. Create one first!"}
+    
+    try:
+        command = data.get('command', '')
+        
+        # Process commands for player's agent
+        result = {"success": True, "message": f"Command '{command}' acknowledged"}
+        
+        # Movement commands
+        if command == 'move_north':
+            player_agent.y = max(0, player_agent.y - 10)
+            result['message'] = "Moved north"
+        elif command == 'move_south':
+            player_agent.y = min(800, player_agent.y + 10)
+            result['message'] = "Moved south"
+        elif command == 'move_east':
+            player_agent.x = min(1200, player_agent.x + 10)
+            result['message'] = "Moved east"
+        elif command == 'move_west':
+            player_agent.x = max(0, player_agent.x - 10)
+            result['message'] = "Moved west"
+        
+        # Job commands
+        elif command.startswith('set_job_'):
+            new_job = command.replace('set_job_', '')
+            player_agent.job = new_job
+            result['message'] = f"Now working as {new_job}"
+        
+        # Action commands
+        elif command == 'gather_food':
+            player_agent.inventory['food'] = player_agent.inventory.get('food', 0) + 3
+            result['message'] = "Gathered 3 food"
+        elif command == 'gather_wood':
+            player_agent.inventory['wood'] = player_agent.inventory.get('wood', 0) + 2
+            result['message'] = "Gathered 2 wood"
+        elif command == 'rest':
+            player_agent.needs['happiness'] = min(100, player_agent.needs.get('happiness', 0) + 20)
+            result['message'] = "Rested (+20 happiness)"
+        
+        return result
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+# Polling endpoint (fallback when WebSocket fails)
+@app.get("/poll")
+async def poll_state():
+    with state_lock:
+        return {
+            'world': world.get_state(),
+            'civilization': civilization.get_stats(),
+            'agents': [a.get_state() for a in world.agents if a.alive]
+        }
+
+
+# Error logging endpoint
+@app.post("/log-error")
+async def log_error(request):
+    try:
+        data = await request.json()
+        with open("js-errors.log", "a") as f:
+            f.write(f"[{data.get('msg', 'unknown')}] at {data.get('url', '')}:{data.get('line', '')}:{data.get('col', '')}\n")
+            if data.get('error'):
+                f.write(f"  Stack: {data.get('error')}\n")
+        return {"status": "logged"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 
 # API Endpoints - thread-safe
 @app.get("/world")

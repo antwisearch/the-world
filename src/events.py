@@ -434,21 +434,6 @@ class Festival(Event):
         world.log_event(f"{emoji} {name} is being celebrated!")
         
         return {'festival': name}
-    def apply(cls, world):
-        name, desc = random.choice(cls.DISASTERS)
-        
-        # Random agents affected
-        alive = [a for a in world.agents if a.alive]
-        victims = random.sample(alive, min(2, len(alive)))
-        
-        for victim in victims:
-            victim.needs['happiness'] -= 20
-            victim.needs['food'] -= 10
-        
-        world.log_event(f"🌋 {name}! {desc}")
-        world.history.record_disaster(name, desc)
-        
-        return {'disaster': name}
 
 
 # Event registry - more events, lower chances

@@ -164,3 +164,7 @@ class ArtifactManager:
             'found': len(self.found_artifacts),
             'items': self.get_found()[:10]
         }
+    
+    def generate(self):
+        """Generate a new artifact (for discovery events)"""
+        return ArtifactGenerator.generate_found_item(None)

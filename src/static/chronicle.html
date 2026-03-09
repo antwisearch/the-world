@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle of [Agent Name]</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #f4e4bc;
+            color: #2c1810;
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            padding: 20px;
+            line-height: 1.8;
+        }
+        .book {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f9f1e1;
+            padding: 40px 50px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            border: 1px solid #8b7355;
+        }
+        .book::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #c4a882;
+            opacity: 0.5;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            color: #5c3a21;
+            border-bottom: 2px solid #8b7355;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #6b5344;
+            margin-bottom: 30px;
+        }
+        .chapter {
+            margin-bottom: 30px;
+        }
+        .chapter-title {
+            font-size: 18px;
+            color: #5c3a21;
+            border-bottom: 1px solid #c4a882;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #efe0c9;
+            padding: 10px;
+            border: 1px solid #c4a882;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #6b5344;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 16px;
+            color: #2c1810;
+            font-weight: bold;
+        }
+        .need-bar {
+            height: 8px;
+            background: #ddd;
+            margin-top: 3px;
+        }
+        .need-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .need-high { background: #4a7c59; }
+        .need-medium { background: #c9a227; }
+        .need-low { background: #a04040; }
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .skill-box {
+            background: #efe0c9;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #c4a882;
+        }
+        .skill-name { font-size: 12px; }
+        .skill-value { font-size: 14px; font-weight: bold; color: #5c3a21; }
+        .event-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #efe0c9;
+            padding: 15px;
+            border: 1px solid #c4a882;
+            font-size: 13px;
+        }
+        .event-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dotted #c4a882;
+        }
+        .event-time {
+            font-size: 11px;
+            color: #6b5344;
+        }
+        .event-text {
+            margin-top: 3px;
+        }
+        .event-birth { color: #2e6b2e; }
+        .event-death { color: #8b0000; font-weight: bold; }
+        .event-legend { color: #8b6914; }
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .inv-item {
+            background: #efe0c9;
+            padding: 5px;
+            text-align: center;
+            font-size: 12px;
+            border: 1px solid #c4a882;
+        }
+        .inv-count {
+            font-weight: bold;
+            color: #5c3a21;
+        }
+        .nav {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #8b7355;
+        }
+        .nav a {
+            color: #5c3a21;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .portrait {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .portrait-icon {
+            font-size: 60px;
+            color: #5c3a21;
+        }
+        .legend-badge {
+            display: inline-block;
+            background: #ffd700;
+            color: #5c3a21;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-left: 10px;
+            border-radius: 3px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6b5344;
+        }
+    </style>
+</head>
+<body>
+    <div class="book">
+        <h1 id="agent-name">Loading...</h1>
+        <div class="subtitle" id="agent-title">Chronicle of a Dwarf</div>
+        
+        <div class="portrait">
+            <div class="portrait-icon" id="portrait">👤</div>
+        </div>
+        
+        <div id="content" class="loading">
+            Loading chronicle...
+        </div>
+        
+        <div class="nav">
+            <a href="/">🗺️ World</a>
+            <a href="/player">👤 My Agent</a>
+            <a href="#" id="prev-agent">← Prev</a>
+            <a href="#" id="next-agent">Next →</a>
+        </div>
+    </div>
+
+    <script>
+        // Get agent ID from URL
+        const params = new URLSearchParams(window.location.search);
+        let agentId = params.get('id');
+        let allAgents = [];
+        let currentIndex = 0;
+        
+        // Icons for jobs
+        const jobIcons = {
+            'farmer': '🌾',
+            'hunter': '🏹',
+            'builder': '🔨',
+            'gatherer': '🌲',
+            'trader': '💰',
+            'guard': '⚔️',
+            'woodcutter': '🪓',
+            'miner': '⛏️',
+            'fisher': '🎣',
+            'teacher': '📚',
+            'healer': '⚕️',
+            'researcher': '🔬',
+            'diplomat': '📜'
+        };
+        
+        async function loadAgents() {
+            try {
+                const response = await fetch('/poll');
+                const data = await response.json();
+                allAgents = data.agents || [];
+                
+                if (!agentId && allAgents.length > 0) {
+                    agentId = allAgents[0].id || allAgents[0].name;
+                }
+                
+                currentIndex = allAgents.findIndex(a => (a.id || a.name) === agentId);
+                if (currentIndex < 0) currentIndex = 0;
+                
+                updateNav();
+                loadAgent();
+            } catch (e) {
+                document.getElementById('content').innerHTML = '<p style="color:#a00">Error loading: ' + e.message + '</p>';
+            }
+        }
+        
+        function updateNav() {
+            const prev = document.getElementById('prev-agent');
+            const next = document.getElementById('next-agent');
+            
+            if (currentIndex > 0) {
+                prev.href = '?id=' + (allAgents[currentIndex - 1].id || allAgents[currentIndex - 1].name);
+            } else {
+                prev.style.visibility = 'hidden';
+            }
+            
+            if (currentIndex < allAgents.length - 1) {
+                next.href = '?id=' + (allAgents[currentIndex + 1].id || allAgents[currentIndex + 1].name);
+            } else {
+                next.style.visibility = 'hidden';
+            }
+        }
+        
+        async function loadAgent() {
+            try {
+                const response = await fetch('/poll');
+                const data = await response.json();
+                const agents = data.agents || [];
+                const world = data.world || {};
+                const civ = data.civilization || {};
+                
+                const agent = agents[currentIndex] || agents[0];
+                if (!agent) {
+                    document.getElementById('content').innerHTML = '<p>No agents in world</p>';
+                    return;
+                }
+                
+                // Update title
+                document.getElementById('agent-name').textContent = agent.name || 'Unknown';
+                document.title = 'Chronicle of ' + (agent.name || 'Unknown');
+                
+                // Job icon
+                const job = agent.job || 'gatherer';
+                document.getElementById('portrait').textContent = jobIcons[job] || '👤';
+                document.getElementById('agent-title').textContent = 
+                    'The ' + (agent.job || 'Worker') + ' • Generation ' + (agent.generation || 1);
+                
+                // Build content
+                let html = '';
+                
+                // Chapter 1: Vital Statistics
+                html += '<div class="chapter"><h2 class="chapter-title">Chapter I: Vital Statistics</h2>';
+                html += '<div class="stat-grid">';
+                
+                const needs = agent.needs || {};
+                const needNames = {food: 'Nourishment', water: 'Hydration', shelter: 'Shelter', happiness: 'Contentment'};
+                
+                for (const [name, val] of Object.entries(needs)) {
+                    const pct = Math.max(0, Math.min(100, val));
+                    const cls = pct > 60 ? 'need-high' : pct > 30 ? 'need-medium' : 'need-low';
+                    html += `<div class="stat-box">
+                        <div class="stat-label">${needNames[name] || name}</div>
+                        <div class="stat-value">${Math.round(pct)}%</div>
+                        <div class="need-bar"><div class="need-fill ${cls}" style="width:${pct}%"></div></div>
+                    </div>`;
+                }
+                html += '</div></div>';
+                
+                // Chapter 2: Skills
+                html += '<div class="chapter"><h2 class="chapter-title">Chapter II: Skills & Abilities</h2>';
+                html += '<div class="skills-grid">';
+                const skills = agent.skills || {};
+                for (const [skill, val] of Object.entries(skills)) {
+                    html += `<div class="skill-box">
+                        <div class="skill-name">${skill}</div>
+                        <div class="skill-value">${val}</div>
+                    </div>`;
+                }
+                html += '</div></div>';
+                
+                // Chapter 3: Inventory
+                html += '<div class="chapter"><h2 class="chapter-title">Chapter III: Possessions</h2>';
+                const inv = agent.inventory || {};
+                if (Object.keys(inv).length > 0 && Object.values(inv).some(v => v > 0)) {
+                    html += '<div class="inventory-grid">';
+                    for (const [item, count] of Object.entries(inv)) {
+                        if (count > 0) {
+                            html += `<div class="inv-item"><span class="inv-count">${count}</span> ${item}</div>`;
+                        }
+                    }
+                    html += '</div>';
+                } else {
+                    html += '<p style="font-style:italic;color:#6b5344">This one owns little of note.</p>';
+                }
+                html += '</div>';
+                
+                // Chapter 4: Chronicle of Events
+                html += '<div class="chapter"><h2 class="chapter-title">Chapter IV: Chronicle of Events</h2>';
+                const events = world.events || [];
+                const agentEvents = events.filter(e => 
+                    e.message && e.message.toLowerCase().includes((agent.name || '').toLowerCase().split(' ')[0])
+                );
+                
+                if (agentEvents.length > 0) {
+                    html += '<div class="event-log">';
+                    for (const e of agentEvents.slice(-50).reverse()) {
+                        let cls = 'event-entry';
+                        if (e.message.match(/born|arrival/i)) cls += ' event-birth';
+                        if (e.message.match(/died|slain|killed/i)) cls += ' event-death';
+                        if (e.message.match(/legend|heroic/i)) cls += ' event-legend';
+                        html += `<div class="${cls}">
+                            <div class="event-time">${e.time || 'Year 1'}</div>
+                            <div class="event-text">${e.message}</div>
+                        </div>`;
+                    }
+                    html += '</div>';
+                } else {
+                    html += '<p style="font-style:italic;color:#6b5344">No notable events recorded yet.</p>';
+                }
+                html += '</div>';
+                
+                // Chapter 5: Lineage
+                if (agent.biography) {
+                    html += '<div class="chapter"><h2 class="chapter-title">Chapter V: Lineage</h2>';
+                    const bio = agent.biography;
+                    if (bio.parents) {
+                        html += `<p><strong>Parents:</strong> ${Array.isArray(bio.parents) ? bio.parents.join(' & ') : bio.parents}</p>`;
+                    }
+                    if (bio.children && bio.children.length > 0) {
+                        html += `<p><strong>Children:</strong> ${bio.children.join(', ')}</p>`;
+                    }
+                    if (bio.birth_place) {
+                        html += `<p><strong>Birthplace:</strong> ${bio.birth_place}</p>`;
+                    }
+                    if (!bio.parents && !bio.children) {
+                        html += '<p style="font-style:italic;color:#6b5344">This one\'s lineage is not yet recorded.</p>';
+                    }
+                    html += '</div>';
+                }
+                
+                document.getElementById('content').innerHTML = html;
+                document.getElementById('content').classList.remove('loading');
+                
+            } catch (e) {
+                document.getElementById('content').innerHTML = '<p style="color:#a00">Error: ' + e.message + '</p>';
+            }
+        }
+        
+        // Start
+        loadAgents();
+        
+        // Refresh every 2 seconds
+        setInterval(loadAgent, 2000);
+    </script>
+</body>
+</html>

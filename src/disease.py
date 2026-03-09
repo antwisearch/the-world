@@ -165,7 +165,7 @@ class DiseaseSystem:
                 disease_data = DISEASES[disease.type]
                 if random.random() < disease_data['mortality']:
                     agent.alive = False
-                    agent.biography.record_death(f"died of {disease_data['name']}")
+                    agent.biography.record_death(agent.age, f"died of {disease_data['name']}", {'x': agent.x, 'y': agent.y})
                     if world:
                         world.log_event(f"☠️ {agent.biography.name} died of {disease_data['name']}!")
                     events.append(f"{agent.biography.name} died of {disease.type}")

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Agent - The World</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0a0a;
+            color: #ddd;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 15px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .title { font-size: 22px; color: #ffd700; }
+        .nav a { color: #4fc3f7; margin-left: 20px; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #333;
+        }
+        .card-title {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        
+        .create-form {
+            display: grid;
+            gap: 10px;
+        }
+        .form-group label { display: block; margin-bottom: 5px; color: #888; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #fff;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover { background: #1976D2; }
+        .btn-success { background: #4CAF50; }
+        .btn-success:hover { background: #388E3C; }
+        
+        .agent-view {
+            display: none;
+        }
+        .agent-view.active { display: block; }
+        
+        .needs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .need-item {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .need-bar {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .need-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .need-high { background: #4CAF50; }
+        .need-medium { background: #FFC107; }
+        .need-low { background: #F44336; }
+        
+        .skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .skill-item {
+            background: #0a0a0a;
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .skill-name { font-size: 11px; color: #888; }
+        .skill-value { font-size: 16px; font-weight: bold; }
+        
+        .inventory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .inv-item {
+            background: #0a0a0a;
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        
+        .commands-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .cmd-btn {
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .cmd-btn:hover { background: #2a2a2a; border-color: #4fc3f7; }
+        .cmd-icon { font-size: 20px; }
+        .cmd-text { font-size: 11px; margin-top: 5px; }
+        
+        .job-select { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .job-btn {
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .job-btn:hover { background: #2a2a2a; }
+        .job-btn.active { border-color: #ffd700; background: #2a2a2a; }
+        
+        .event-log {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .event-item { padding: 5px 0; border-bottom: 1px solid #333; }
+        
+        .status-bar {
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .player-marker {
+            display: inline-block;
+            background: #ffd700;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">⚔️ Your Agent</div>
+        <div class="nav">
+            <a href="/">🗺️ World</a>
+            <a href="/chronicle">📖 Chronicle</a>
+        </div>
+    </div>
+    
+    <!-- Create Agent Form (shown when no agent exists) -->
+    <div id="create-view" class="card agent-view active">
+        <div class="card-title">Create Your Agent</div>
+        <p style="margin-bottom:15px;color:#888;">Enter the world with your own character!</p>
+        
+        <div class="create-form">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="agent-name" placeholder="Enter a name...">
+            </div>
+            <div class="form-group">
+                <label>Job</label>
+                <select id="agent-job">
+                    <option value="gatherer">🌲 Gatherer - Collect resources</option>
+                    <option value="farmer">🌾 Farmer - Grow food</option>
+                    <option value="hunter">🏹 Hunter - Hunt for food</option>
+                    <option value="builder">🔨 Builder - Construct buildings</option>
+                    <option value="miner">⛏️ Miner - Extract ore</option>
+                    <option value="woodcutter">🪓 Woodcutter - Chop trees</option>
+                    <option value="trader">💰 Trader - Buy and sell</option>
+                    <option value="guard">⚔️ Guard - Protect settlement</option>
+                    <option value="healer">⚕️ Healer - Cure sickness</option>
+                    <option value="teacher">📚 Teacher - Train others</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="createAgent()">Enter the World</button>
+        </div>
+    </div>
+    
+    <!-- Agent View (shown when agent exists) -->
+    <div id="agent-view" class="agent-view">
+        <div class="grid">
+            <!-- Agent Info -->
+            <div class="card">
+                <div class="card-title">
+                    Your Agent <span class="player-marker">PLAYER</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-size:24px;" id="agent-name">-</div>
+                        <div style="color:#4fc3f7;" id="agent-job">-</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px;color:#888;">Generation</div>
+                        <div style="font-size:20px;" id="agent-gen">1</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <div style="font-size:12px;color:#888;">Position</div>
+                    <div id="agent-pos">-</div>
+                </div>
+            </div>
+            
+            <!-- Needs -->
+            <div class="card">
+                <div class="card-title">Needs</div>
+                <div class="needs-grid" id="needs-grid">
+                    <div class="need-item">
+                        <div>🍖 Food</div>
+                        <div class="need-bar"><div class="need-fill" id="need-food" style="width:0%"></div></div>
+                        <div id="food-val">0%</div>
+                    </div>
+                    <div class="need-item">
+                        <div>💧 Water</div>
+                        <div class="need-bar"><div class="need-fill" id="need-water" style="width:0%"></div></div>
+                        <div id="water-val">0%</div>
+                    </div>
+                    <div class="need-item">
+                        <div>🏠 Shelter</div>
+                        <div class="need-bar"><div class="need-fill" id="need-shelter" style="width:0%"></div></div>
+                        <div id="shelter-val">0%</div>
+                    </div>
+                    <div class="need-item">
+                        <div>😊 Happiness</div>
+                        <div class="need-bar"><div class="need-fill" id="need-happiness" style="width:0%"></div></div>
+                        <div id="happiness-val">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Skills -->
+        <div class="card" style="margin-top:15px;">
+            <div class="card-title">Skills</div>
+            <div class="skills-grid" id="skills-grid">Loading...</div>
+        </div>
+        
+        <!-- Inventory -->
+        <div class="card" style="margin-top:15px;">
+            <div class="card-title">Inventory</div>
+            <div class="inventory-grid" id="inventory-grid">Loading...</div>
+        </div>
+        
+        <!-- Commands -->
+        <div class="card" style="margin-top:15px;">
+            <div class="card-title">Movement</div>
+            <div class="commands-grid">
+                <div></div>
+                <div class="cmd-btn" onclick="sendCommand('move_north')">
+                    <div class="cmd-icon">⬆️</div>
+                    <div class="cmd-text">North</div>
+                </div>
+                <div></div>
+                <div class="cmd-btn" onclick="sendCommand('move_west')">
+                    <div class="cmd-icon">⬅️</div>
+                    <div class="cmd-text">West</div>
+                </div>
+                <div class="cmd-btn" onclick="sendCommand('rest')">
+                    <div class="cmd-icon">😴</div>
+                    <div class="cmd-text">Rest</div>
+                </div>
+                <div class="cmd-btn" onclick="sendCommand('move_east')">
+                    <div class="cmd-icon">➡️</div>
+                    <div class="cmd-text">East</div>
+                </div>
+                <div></div>
+                <div class="cmd-btn" onclick="sendCommand('move_south')">
+                    <div class="cmd-icon">⬇️</div>
+                    <div class="cmd-text">South</div>
+                </div>
+                <div></div>
+            </div>
+        </div>
+        
+        <!-- Change Job -->
+        <div class="card" style="margin-top:15px;">
+            <div class="card-title">Change Job</div>
+            <div class="job-select" id="job-select">
+                <div class="job-btn" onclick="setJob('gatherer')">🌲 Gatherer</div>
+                <div class="job-btn" onclick="setJob('farmer')">🌾 Farmer</div>
+                <div class="job-btn" onclick="setJob('hunter')">🏹 Hunter</div>
+                <div class="job-btn" onclick="setJob('builder')">🔨 Builder</div>
+                <div class="job-btn" onclick="setJob('miner')">⛏️ Miner</div>
+                <div class="job-btn" onclick="setJob('woodcutter')">🪓 Cutter</div>
+                <div class="job-btn" onclick="setJob('trader')">💰 Trader</div>
+                <div class="job-btn" onclick="setJob('guard')">⚔️ Guard</div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="card" style="margin-top:15px;">
+            <div class="card-title">Actions</div>
+            <div class="commands-grid">
+                <div class="cmd-btn" onclick="sendCommand('gather_food')">
+                    <div class="cmd-icon">🍎</div>
+                    <div class="cmd-text">Gather Food</div>
+                </div>
+                <div class="cmd-btn" onclick="sendCommand('gather_wood')">
+                    <div class="cmd-icon">🪵</div>
+                    <div class="cmd-text">Gather Wood</div>
+                </div>
+                <div class="cmd-btn" onclick="sendCommand('rest')">
+                    <div class="cmd-icon">😴</div>
+                    <div class="cmd-text">Rest</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar" id="status">Connected</div>
+    </div>
+
+    <script>
+        let myAgent = null;
+        
+        async function createAgent() {
+            const name = document.getElementById('agent-name').value || 'Adventurer';
+            const job = document.getElementById('agent-job').value;
+            
+            try {
+                const response = await fetch('/create_agent', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, job})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('create-view').classList.remove('active');
+                    document.getElementById('agent-view').style.display = 'block';
+                    loadAgent();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        async function loadAgent() {
+            try {
+                const response = await fetch('/my_agent');
+                const data = await response.json();
+                
+                if (data.success && data.agent) {
+                    myAgent = data.agent;
+                    document.getElementById('create-view').classList.remove('active');
+                    document.getElementById('agent-view').style.display = 'block';
+                    updateAgentView(data.agent);
+                } else {
+                    document.getElementById('create-view').classList.add('active');
+                    document.getElementById('agent-view').style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Error loading agent:', e);
+            }
+        }
+        
+        function updateAgentView(agent) {
+            // Name and job
+            document.getElementById('agent-name').textContent = agent.name || 'Unknown';
+            document.getElementById('agent-job').textContent = agent.job || 'None';
+            document.getElementById('agent-gen').textContent = agent.generation || 1;
+            document.getElementById('agent-pos').textContent = 
+                `X: ${Math.round(agent.position?.x || 0)}, Y: ${Math.round(agent.position?.y || 0)}`;
+            
+            // Needs
+            const needs = agent.needs || {};
+            updateNeed('food', needs.food || 0);
+            updateNeed('water', needs.water || 0);
+            updateNeed('shelter', needs.shelter || 0);
+            updateNeed('happiness', needs.happiness || 0);
+            
+            // Skills
+            const skills = agent.skills || {};
+            let skillHtml = '';
+            for (const [name, val] of Object.entries(skills)) {
+                skillHtml += `<div class="skill-item"><div class="skill-name">${name}</div><div class="skill-value">${val}</div></div>`;
+            }
+            document.getElementById('skills-grid').innerHTML = skillHtml || '<div style="color:#888">No skills yet</div>';
+            
+            // Inventory
+            const inv = agent.inventory || {};
+            let invHtml = '';
+            for (const [item, count] of Object.entries(inv)) {
+                if (count > 0) {
+                    invHtml += `<div class="inv-item"><strong>${count}</strong> ${item}</div>`;
+                }
+            }
+            document.getElementById('inventory-grid').innerHTML = invHtml || '<div style="color:#888;padding:10px;">Empty</div>';
+            
+            // Highlight current job
+            document.querySelectorAll('.job-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(agent.job?.substring(0, 4))) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        function updateNeed(name, value) {
+            const pct = Math.max(0, Math.min(100, value));
+            const fill = document.getElementById('need-' + name);
+            fill.style.width = pct + '%';
+            fill.className = 'need-fill ' + (pct > 60 ? 'need-high' : pct > 30 ? 'need-medium' : 'need-low');
+            document.getElementById(name + '-val').textContent = Math.round(pct) + '%';
+        }
+        
+        async function sendCommand(cmd) {
+            try {
+                const response = await fetch('/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({command: cmd})
+                });
+                const data = await response.json();
+                document.getElementById('status').textContent = data.message || 'Done';
+                loadAgent();
+            } catch (e) {
+                document.getElementById('status').textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function setJob(job) {
+            await sendCommand('set_job_' + job);
+        }
+        
+        // Initial load
+        loadAgent();
+        
+        // Refresh every 2 seconds
+        setInterval(loadAgent, 2000);
+    </script>
+</body>
+</html>

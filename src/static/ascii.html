@@ -20,8 +20,6 @@
             border: 1px solid #444;
             display: inline-block;
             line-height: 11px;
-            transform: scale(1.5);
-            transform-origin: top left;
         }
         .header {
             padding: 5px 0;
@@ -34,10 +32,7 @@
         .title { color: #ffaa00; font-size: 14px; }
         .info { color: #666; font-size: 10px; }
         .main { display: flex; gap: 15px; }
-        .sidebar {
-            width: 220px;
-            vertical-align: top;
-        }
+        .sidebar { width: 220px; vertical-align: top; }
         .stat-box {
             background: #0a0a0a;
             padding: 5px;
@@ -63,10 +58,6 @@
         .event.trade { color: #aa0; }
         .event.season { color: #0af; }
         .event.weather { color: #aaf; }
-        .event.romance { color: #f0f; }
-        .event.combat { color: #f00; }
-        .event.festival { color: #fa0; }
-        .event.legendary { color: #fd0; font-weight: bold; }
         .legend {
             font-size: 9px;
             background: #0a0a0a;
@@ -74,166 +65,60 @@
             border: 1px solid #222;
         }
         .legend-title { color: #555; margin-bottom: 3px; }
-        
-        /* Weather colors */
-        .weather-clear { color: #ffdd44; }
-        .weather-cloudy { color: #888888; }
-        .weather-rain { color: #4488ff; }
-        .weather-snow { color: #ffffff; }
-        .weather-storm { color: #aa44aa; }
-        
-        /* Season colors */
-        .season-spring { color: #44ff44; }
-        .season-summer { color: #ffaa00; }
-        .season-autumn { color: #ff6600; }
-        .season-winter { color: #88ccff; }
-        
-        /* Status indicators */
-        .status-good { color: #0a0; }
-        .status-warn { color: #aa0; }
-        .status-bad { color: #a00; }
         .c-water { color: #00aaff; }
         .c-tree { color: #00ff00; }
-        .c-wood { color: #00cc00; }
-        .c-ore { color: #ff6600; }
-        .c-stone { color: #888888; }
         .c-food { color: #ffaa00; }
         .c-agent { color: #ff66ff; }
-        .c-agent-hunter { color: #ff4444; }
-        .c-agent-builder { color: #44aaff; }
-        .c-agent-farmer { color: #44ff44; }
-        .c-agent-trader { color: #ffff00; }
-        .c-agent-guard { color: #ff6666; }
-        .c-agent-gatherer { color: #aaaaaa; }
-        .c-shelter { color: #aa6600; }
-        .c-farm { color: #22cc22; }
-        .c-workshop { color: #aa44aa; }
-        .c-agent-teacher { color: #ff88ff; }
-        .c-agent-healer { color: #88ff88; }
-        .c-agent-researcher { color: #8888ff; }
-        .c-agent-diplomat { color: #ffff88; }
-        .c-agent-woodcutter { color: #00aa00; }
-        .c-agent-miner { color: #aaaaaa; }
-        .c-agent-fisher { color: #00ffff; }
-        
-        /* Need bars */
-        .need-bar { display: inline-block; height: 6px; width: 30px; background: #222; margin-right: 3px; }
-        .need-bar-fill { height: 100%; }
-        
-        /* Mini-map */
-        .minimap { 
-            background: #111; 
-            border: 1px solid #333; 
-            padding: 2px;
-            margin-top: 5px;
-        }
-        .minimap-row { font-size: 6px; line-height: 6px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
     <div class="header">
         <span class="title">⛏ THE WORLD - Dwarf Fortress Style</span>
-        <span class="info">A colony simulation</span>
+        <span class="info"><a href="/player" style="color:#ffd700">👤 My Agent</a> | <a href="/chronicle" style="color:#4fc3f7">📖 Chronicle</a> | <span id="status">Loading...</span></span>
     </div>
     <div class="main">
-        <div id="game"></div>
+        <div id="game">Connecting...</div>
         <div class="sidebar">
             <div class="stat-box">
                 <div class="stat-label">POPULATION</div>
                 <div class="stat-value" id="pop">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">GENERATION</div>
-                <div class="stat-value" id="gen">1</div>
-            </div>
-            <div class="stat-box">
                 <div class="stat-label">HAPPINESS</div>
-                <div class="stat-value" id="hap">0</div>
+                <div class="stat-value" id="hap">0%</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">TOTAL LABOR</div>
+                <div class="stat-label">JOBS DONE</div>
                 <div class="stat-value" id="jobs">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">WORKFORCE</div>
-                <div class="stat-value" id="workers"></div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">BUILDINGS</div>
-                <div class="stat-value" id="buildings">0</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">RESOURCES</div>
                 <div class="stat-value" id="resources">0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">YEAR</div>
-                <div class="stat-value" id="year">0</div>
-            </div>
-            <div class="stat-box">
                 <div class="stat-label">SEASON</div>
-                <div class="stat-value" id="season">spring</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">WEATHER</div>
-                <div class="stat-value" id="weather">clear</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">AGENTS</div>
-                <div class="agents" id="agents"></div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">ARTIFACTS</div>
-                <div class="stat-value" id="artifacts">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">LEGENDS</div>
-                <div class="stat-value" id="legends">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">BIOME</div>
-                <div class="stat-value" id="biome">unknown</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">MINI-MAP</div>
-                <div class="minimap" id="minimap"></div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">WEALTH</div>
-                <div class="stat-value" id="wealth">0</div>
+                <div class="stat-value" id="season">?</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">EVENT LOG</div>
                 <div class="events" id="events"></div>
             </div>
-            <div class="legend">
-                <div class="legend-title">SYMBOLS</div>
-                <div><span class="c-agent">@</span> = dwarf <span class="c-agent-hunter">h</span> = hunter</div>
-                <div><span class="c-agent-builder">b</span> = builder <span class="c-agent-farmer">f</span> = farmer</div>
-                <div><span class="c-agent-trader">t</span> = trader <span class="c-agent-guard">G</span> = guard</div>
-                <div><span class="c-agent-gatherer">g</span> = gatherer <span class="c-agent-woodcutter">w</span> = woodcutter</div>
-                <div><span class="c-agent-miner">m</span> = miner <span class="c-agent-fisher">F</span> = fisher</div>
-                <div><span class="c-agent-teacher">T</span> = teacher <span class="c-agent-healer">+</span> = healer</div>
-                <div><span class="c-agent-researcher">R</span> = researcher <span class="c-agent-diplomat">D</span> = diplomat</div>
-                <div><span class="c-food">*</span> = food <span class="c-tree">T</span> = tree</div>
-                <div><span class="c-stone">O</span> = stone <span class="c-ore">#</span> = ore</div>
-                <div><span class="c-water">~</span> = water <span class="c-shelter">[#]</span> = shelter</div>
-                <div class="legend-title" style="margin-top:8px">BIOMES</div>
-                <div><span style="color:#00ff00">G</span> = grassland</div>
-                <div><span style="color:#006400">F</span> = forest <span style="color:#8B4513">D</span> = desert</div>
-                <div><span style="color:#4169e1">J</span> = jungle <span style="color:#add8e6">U</span> = tundra</div>
-                <div><span style="color:#f0f8ff">S</span> = snow <span style="color:#556b2f">W</span> = swamp <span style="color:#daa520">V</span> = savanna</div>
-            </div>
         </div>
     </div>
 
     <script>
-        const ws = new WebSocket(`ws://${window.location.host}/ws`);
-        
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            update(data);
-        };
+        // Poll for data every second
+        function poll() {
+            fetch('/poll')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('status').textContent = 'Connected';
+                    update(data);
+                })
+                .catch(e => {
+                    document.getElementById('status').textContent = 'Error: ' + e.message;
+                });
+        }
         
         function update(data) {
             const civ = data.civilization || {};
@@ -241,171 +126,28 @@
             const agents = data.agents || [];
             
             // Stats
-            const pop = civ.population || 0;
-            document.getElementById('pop').textContent = pop;
-            document.getElementById('gen').textContent = civ.generation || 1;
-            
-            const hap = civ.avg_happiness || 0;
-            const hapEl = document.getElementById('hap');
-            hapEl.textContent = hap.toFixed(1) + '%';
-            hapEl.className = 'stat-value ' + (hap > 50 ? 'good' : hap < 30 ? 'bad' : '');
-            
+            document.getElementById('pop').textContent = civ.population || 0;
+            document.getElementById('hap').textContent = (civ.avg_happiness || 0).toFixed(1) + '%';
             document.getElementById('jobs').textContent = civ.total_jobs_done || 0;
-            
-            // Workers
-            const jobs = civ.jobs || {};
-            document.getElementById('workers').textContent = Object.entries(jobs).map(([j,c]) => j[0].toUpperCase()+':'+c).join(' ') || 'none';
-            
-            // Buildings
-            const buildings = world.buildings || [];
-            document.getElementById('buildings').textContent = buildings.length;
-            
-            // Resources
-            const resources = world.resources || [];
-            document.getElementById('resources').textContent = resources.length;
-            
-            // Year
-            const history = data.history || {};
-            document.getElementById('year').textContent = history.summary?.year || 0;
+            document.getElementById('resources').textContent = (world.resources || []).length;
             
             // Season
-            const seasons = world.seasons || {};
-            const seasonIcons = {
-                'spring': '🌸',
-                'summer': '☀️',
-                'autumn': '🍂',
-                'winter': '❄️'
-            };
-            const sIcon = seasonIcons[seasons.season] || '🌸';
-            document.getElementById('season').textContent = sIcon + ' ' + (seasons.season || 'spring');
-            
-            // Weather
-            const weather = world.weather || {};
-            const weatherIcons = {
-                'clear': '☀️',
-                'cloudy': '☁️',
-                'rain': '🌧️',
-                'snow': '❄️',
-                'storm': '⛈️'
-            };
-            const wIcon = weatherIcons[weather.weather] || '☀️';
-            document.getElementById('weather').textContent = wIcon + ' ' + (weather.weather || 'clear');
-            
-            // Artifacts
-            const artifacts = world.artifacts || {};
-            document.getElementById('artifacts').textContent = artifacts.total || 0;
-            
-            // Legends
-            const legends = world.legends || {};
-            document.getElementById('legends').textContent = legends.total_legends || 0;
-            
-            // Biome
-            const biome = world.biome || 'unknown';
-            const biomes = world.biomes || [];
-            document.getElementById('biome').textContent = biomes.length > 0 ? biomes.join(', ') : biome;
-            
-            // Economy
-            const economy = world.economy || {};
-            document.getElementById('wealth').textContent = economy.total_wealth || 0;
-            
-            // Mini-map (20x10)
-            const minimap = document.getElementById('minimap');
-            const MW = 20, MH = 10;
-            let mm = Array(MH).fill().map(() => Array(MW).fill('.'));
-            let mmColors = Array(MH).fill().map(() => Array(MW).fill('#222'));
-            
-            // Scale world coords to minimap
-            const mmx = x => Math.floor(x / 1200 * MW);
-            const mmy = y => Math.floor((800 - y) / 800 * MH);
-            
-            // Water
-            water.forEach(w => {
-                for (let dy = -2; dy <= 2; dy++) {
-                    for (let dx = -4; dx <= 4; dx++) {
-                        const sx = mmx(w.x) + dx;
-                        const sy = mmy(w.y) + dy;
-                        if (sx >= 0 && sx < MW && sy >= 0 && sy < MH) {
-                            mm[sy][sx] = '~';
-                            mmColors[sy][sx] = '#0066cc';
-                        }
-                    }
-                }
-            });
-            
-            // Resources
-            resources.filter(r => r.type === 'wood').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = 'T'; mmColors[sy][sx] = '#00aa00'; } });
-            resources.filter(r => r.type === 'ore').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = '#'; mmColors[sy][sx] = '#ff6600'; } });
-            resources.filter(r => r.type === 'stone').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = 'O'; mmColors[sy][sx] = '#666'; } });
-            resources.filter(r => r.type === 'food').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = '*'; mmColors[sy][sx] = '#ffaa00'; } });
-            
-            // Buildings
-            buildings.forEach(b => {
-                const sx = mmx(b.x), sy = mmy(b.y);
-                if (sx>=0&&sx<MW&&sy>=0&&sy<MH) {
-                    const chars = {'shelter': '#', 'farm': '+', 'workshop': '%', 'shop': '$'};
-                    mm[sy][sx] = chars[b.type] || 'B';
-                    mmColors[sy][sx] = '#aa6600';
-                }
-            });
-            
-            // Agents
-            agents.forEach(a => {
-                const sx = mmx(a.position.x), sy = mmy(a.position.y);
-                if (sx>=0&&sx<MW&&sy>=0&&sy<MH) {
-                    mm[sy][sx] = '@';
-                    mmColors[sy][sx] = '#ff66ff';
-                }
-            });
-            
-            // Render minimap
-            let mmHtml = '';
-            for (let y = 0; y < MH; y++) {
-                mmHtml += '<div class="minimap-row">';
-                for (let x = 0; x < MW; x++) {
-                    mmHtml += `<span style="color:${mmColors[y][x]}">${mm[y][x]}</span>`;
-                }
-                mmHtml += '</div>';
-            }
-            minimap.innerHTML = mmHtml;
-            
-            // Agent list with names and need bars
-            const agentsList = document.getElementById('agents');
-            const agentsHtml = agents.slice(0, 15).map(a => {
-                const name = a.name || 'Unknown';
-                const shortName = name.split(' ')[0].substring(0, 8);
-                const job = a.job ? a.job[0].toUpperCase() : '?';
-                
-                // Needs
-                const needs = a.needs || {};
-                const food = needs.food || 0;
-                const water = needs.water || 0;
-                const shelter = needs.shelter || 0;
-                const happiness = needs.happiness || 0;
-                
-                const getBar = (val) => {
-                    const color = val > 50 ? '#0a0' : val > 25 ? '#aa0' : '#a00';
-                    return `<span class="need-bar"><span class="need-bar-fill" style="width:${val}%;background:${color}"></span></span>`;
-                };
-                
-                return `<div style="font-size:8px;margin:2px 0;">
-                    <span style="color:#ff66ff">${job}</span> ${shortName}
-                    <span style="color:#888">${getBar(food)}${getBar(water)}</span>
-                </div>`;
-            }).join('');
-            agentsList.innerHTML = agentsHtml;
+            const seasonIcons = {'spring': '🌸', 'summer': '☀️', 'autumn': '🍂', 'winter': '❄️'};
+            const season = (world.seasons || {}).season || 'spring';
+            document.getElementById('season').textContent = (seasonIcons[season] || '🌸') + ' ' + season;
             
             // Events
             const events = world.events || [];
-            let eventsHtml = events.slice(-20).reverse().map(e => {
+            let html = events.slice(-20).reverse().map(e => {
                 let cls = 'event';
-                if (e.message.match(/Born|arrival/i)) cls += ' birth';
-                else if (e.message.match(/died/i)) cls += ' death';
-                else if (e.message.match(/built|construct/i)) cls += ' build';
-                else if (e.message.match(/trade/i)) cls += ' trade';
-                return `<div class="${cls}">${e.message}</div>`;
+                if (e.message && e.message.match(/Born|arrival/i)) cls += ' birth';
+                else if (e.message && e.message.match(/died/i)) cls += ' death';
+                else if (e.message && e.message.match(/built|construct/i)) cls += ' build';
+                return '<div class="' + cls + '">' + (e.message || '') + '</div>';
             }).join('');
-            document.getElementById('events').innerHTML = eventsHtml;
+            document.getElementById('events').innerHTML = html || '<div class="event">No events yet</div>';
             
+            // Render game map
             render(data);
         }
         
@@ -414,15 +156,11 @@
             const world = data.world || {};
             const agents = data.agents || [];
             const resources = world.resources || [];
-            const buildings = world.buildings || [];
             const water = world.water_sources || [];
             
-            // Grid - store char + color class
             let g = [];
-            let colors = [];
             for (let y = 0; y < H; y++) {
                 g[y] = Array(W).fill(' ');
-                colors[y] = Array(W).fill('');
             }
             
             const wx = x => Math.floor(x / 1200 * W);
@@ -435,160 +173,43 @@
                         const sx = wx(w.x) + dx;
                         const sy = wy(w.y) + dy;
                         if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                            const dist = Math.sqrt(dx*dx + dy*dy);
-                            if (dist < 5) {
-                                g[sy][sx] = '~';
-                                colors[sy][sx] = 'c-water';
-                            }
+                            if (Math.sqrt(dx*dx + dy*dy) < 5) g[sy][sx] = '~';
                         }
                     }
                 }
             });
             
-            // Trees/wood
-            resources.filter(r => r.type === 'wood').forEach(r => {
-                const sx = wx(r.x);
-                const sy = wy(r.y);
+            // Resources
+            resources.forEach(r => {
+                const sx = wx(r.x), sy = wy(r.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = 'T';
-                    colors[sy][sx] = 'c-tree';
-                }
-            });
-            
-            // Ore deposits
-            resources.filter(r => r.type === 'ore').forEach(r => {
-                const sx = wx(r.x);
-                const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = '#';
-                    colors[sy][sx] = 'c-ore';
-                }
-            });
-            
-            // Stone
-            resources.filter(r => r.type === 'stone').forEach(r => {
-                const sx = wx(r.x);
-                const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = 'O';
-                    colors[sy][sx] = 'c-stone';
-                }
-            });
-            
-            // Food
-            resources.filter(r => r.type === 'food').forEach(r => {
-                const sx = wx(r.x);
-                const sy = wy(r.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = '*';
-                    colors[sy][sx] = 'c-food';
-                }
-            });
-            
-            // Buildings - shelter
-            buildings.filter(b => b.type === 'shelter').forEach(b => {
-                const sx = wx(b.x);
-                const sy = wy(b.y);
-                for (let dy = -1; dy <= 1; dy++) {
-                    for (let dx = -2; dx <= 2; dx++) {
-                        const gx = sx + dx;
-                        const gy = sy + dy;
-                        if (gx >= 0 && gx < W && gy >= 0 && gy < H) {
-                            if (dx === -2 || dx === 2 || dy === -1 || dy === 1) {
-                                g[gy][gx] = '[';
-                                colors[gy][gx] = 'c-shelter';
-                            } else {
-                                g[gy][gx] = '#';
-                                colors[gy][gx] = 'c-shelter';
-                            }
-                        }
-                    }
-                }
-            });
-            
-            // Farms
-            buildings.filter(b => b.type === 'farm').forEach(b => {
-                const sx = wx(b.x);
-                const sy = wy(b.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = '+';
-                    colors[sy][sx] = 'c-farm';
-                    for (let i = -1; i <= 1; i++) {
-                        if (sx+i >= 0 && sx+i < W) {
-                            g[sy-1][sx+i] = '-';
-                            colors[sy-1][sx+i] = 'c-farm';
-                        }
-                        if (sx+i >= 0 && sx+i < W) {
-                            g[sy+1][sx+i] = '-';
-                            colors[sy+1][sx+i] = 'c-farm';
-                        }
-                    }
-                }
-            });
-            
-            // Workshops
-            buildings.filter(b => b.type === 'workshop').forEach(b => {
-                const sx = wx(b.x);
-                const sy = wy(b.y);
-                if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = '%';
-                    colors[sy][sx] = 'c-workshop';
+                    if (r.type === 'wood') g[sy][sx] = 'T';
+                    else if (r.type === 'food') g[sy][sx] = '*';
+                    else if (r.type === 'ore') g[sy][sx] = '#';
+                    else if (r.type === 'stone') g[sy][sx] = 'O';
                 }
             });
             
             // Agents
-            const agentColors = {
-                'hunter': 'c-agent-hunter',
-                'builder': 'c-agent-builder',
-                'farmer': 'c-agent-farmer',
-                'trader': 'c-agent-trader',
-                'guard': 'c-agent-guard',
-                'gatherer': 'c-agent-gatherer',
-                'teacher': 'c-agent-teacher',
-                'healer': 'c-agent-healer',
-                'researcher': 'c-agent-researcher',
-                'diplomat': 'c-agent-diplomat',
-                'woodcutter': 'c-agent-woodcutter',
-                'miner': 'c-agent-miner',
-                'fisher': 'c-agent-fisher'
-            };
-            
-            const agentChars = {
-                'hunter': 'h',
-                'builder': 'b', 
-                'farmer': 'f',
-                'trader': 't',
-                'guard': 'G',
-                'gatherer': 'g',
-                'teacher': 'T',
-                'healer': '+',
-                'researcher': 'R',
-                'diplomat': 'D',
-                'woodcutter': 'w',
-                'miner': 'm',
-                'fisher': 'F'
-            };
-            
             agents.forEach(a => {
-                const sx = wx(a.position.x);
-                const sy = wy(a.position.y);
+                const pos = a.position || {x: 0, y: 0};
+                const sx = wx(pos.x), sy = wy(pos.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    g[sy][sx] = agentChars[a.job] || '@';
-                    colors[sy][sx] = agentColors[a.job] || 'c-agent';
+                    g[sy][sx] = '@';
                 }
             });
             
-            // Build output with colors
+            // Build output
             let out = '<span style="color:#666">┌' + '─'.repeat(W) + '┐</span>\n';
             for (let y = 0; y < H; y++) {
                 out += '<span style="color:#666">│</span>';
                 for (let x = 0; x < W; x++) {
-                    const c = colors[y][x];
-                    if (c) {
-                        out += `<span class="${c}">${g[y][x]}</span>`;
-                    } else {
-                        out += g[y][x];
-                    }
+                    const c = g[y][x];
+                    if (c === '~') out += '<span style="color:#00aaff">' + c + '</span>';
+                    else if (c === 'T') out += '<span style="color:#00ff00">' + c + '</span>';
+                    else if (c === '*') out += '<span style="color:#ffaa00">' + c + '</span>';
+                    else if (c === '@') out += '<span style="color:#ff66ff">' + c + '</span>';
+                    else out += c;
                 }
                 out += '<span style="color:#666">│</span>\n';
             }
@@ -597,9 +218,9 @@
             document.getElementById('game').innerHTML = out;
         }
         
-        ws.onclose = () => {
-            document.getElementById('game').innerHTML = '<span style="color:#f00">DISCONNECTED - Refresh to reconnect</span>';
-        };
+        // Start polling
+        poll();
+        setInterval(poll, 1000);
     </script>
 </body>
 </html>
