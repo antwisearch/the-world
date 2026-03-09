@@ -19,6 +19,7 @@ from src.weather import WeatherManager
 from src.seasonal_events import SeasonalEventManager
 from src.more_events import EVENTS as MORE_EVENTS
 from src.trading import trade_manager, TradeManager, ITEMS
+from src.disease import disease_system, DiseaseSystem
 
 
 class World:
@@ -75,6 +76,9 @@ class World:
         
         # Economy
         self.economy = Economy(self)
+        
+        # Disease system
+        self.disease_system = DiseaseSystem()
         
         # Seasons
         self.seasons = SeasonManager()
@@ -162,6 +166,10 @@ class World:
                     agent.drink(self)
                 
                 agent.fitness += dt * (1 + agent.jobs_done * 0.1)
+        
+        # Process diseases
+        self.disease_system.process_diseases(self.agents, self)
+        self.disease_system.spread_disease(self.agents, self)
         
         # Remove dead
         dead = [a for a in self.agents if not a.alive]
