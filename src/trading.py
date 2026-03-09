@@ -15,54 +15,54 @@ from datetime import datetime
 # Tradeable items with base values and biome sources
 ITEMS = {
     # Food (cheap in forests/farms, expensive in deserts/tundra)
-    "meat": {"value": 10, "category": "food", "biomes": ["forest", "grassland", "savanna"]},
-    "fish": {"value": 8, "category": "food", "biomes": ["swamp", "grassland"]},
-    "fruit": {"value": 5, "category": "food", "biomes": ["forest", "jungle", "savanna"]},
-    "vegetables": {"value": 5, "category": "food", "biomes": ["grassland", "savanna"]},
-    "grain": {"value": 3, "category": "food", "biomes": ["grassland", "savanna"]},
+    "meat": {"value": 8, "category": "food", "biomes": ["forest", "grassland", "savanna"]},
+    "fish": {"value": 6, "category": "food", "biomes": ["swamp", "grassland"]},
+    "fruit": {"value": 4, "category": "food", "biomes": ["forest", "jungle", "savanna"]},
+    "vegetables": {"value": 4, "category": "food", "biomes": ["grassland", "savanna"]},
+    "grain": {"value": 2, "category": "food", "biomes": ["grassland", "savanna"]},
     
     # Materials (cheap where abundant)
-    "wood": {"value": 5, "category": "material", "biomes": ["forest", "jungle"]},
-    "stone": {"value": 5, "category": "material", "biomes": ["mountain", "tundra", "desert"]},
-    "iron": {"value": 15, "category": "material", "biomes": ["mountain", "tundra"]},
-    "gold": {"value": 50, "category": "material", "biomes": ["mountain"]},
-    "cloth": {"value": 8, "category": "material", "biomes": ["grassland", "savanna"]},
-    "fur": {"value": 12, "category": "material", "biomes": ["tundra", "snow"]},
+    "wood": {"value": 4, "category": "material", "biomes": ["forest", "jungle"]},
+    "stone": {"value": 4, "category": "material", "biomes": ["mountain", "tundra", "desert"]},
+    "iron": {"value": 12, "category": "material", "biomes": ["mountain", "tundra"]},
+    "gold": {"value": 40, "category": "material", "biomes": ["mountain"]},
+    "cloth": {"value": 6, "category": "material", "biomes": ["grassland", "savanna"]},
+    "fur": {"value": 10, "category": "material", "biomes": ["tundra", "snow"]},
     
-    # Tools/Weapons
-    "axe": {"value": 20, "category": "tool", "biomes": ["forest"]},
-    "sword": {"value": 30, "category": "weapon", "biomes": ["grassland"]},
-    "pickaxe": {"value": 20, "category": "tool", "biomes": ["mountain"]},
-    "spear": {"value": 15, "category": "weapon", "biomes": ["grassland", "savanna"]},
-    "bow": {"value": 25, "category": "weapon", "biomes": ["forest", "jungle"]},
+    # Tools/Weapons (balanced values)
+    "axe": {"value": 18, "category": "tool", "biomes": ["forest"]},
+    "sword": {"value": 25, "category": "weapon", "biomes": ["grassland"]},
+    "pickaxe": {"value": 18, "category": "tool", "biomes": ["mountain"]},
+    "spear": {"value": 12, "category": "weapon", "biomes": ["grassland", "savanna"]},
+    "bow": {"value": 20, "category": "weapon", "biomes": ["forest", "jungle"]},
     
     # Luxuries (expensive everywhere)
-    "jewelry": {"value": 100, "category": "luxury", "biomes": ["mountain"]},
-    "wine": {"value": 25, "category": "luxury", "biomes": ["grassland"]},
-    "silk": {"value": 40, "category": "luxury", "biomes": ["jungle", "savanna"]},
-    "spices": {"value": 35, "category": "luxury", "biomes": ["desert", "savanna"]},
-    "gems": {"value": 80, "category": "luxury", "biomes": ["mountain", "desert"]},
+    "jewelry": {"value": 80, "category": "luxury", "biomes": ["mountain"]},
+    "wine": {"value": 20, "category": "luxury", "biomes": ["grassland"]},
+    "silk": {"value": 35, "category": "luxury", "biomes": ["jungle", "savanna"]},
+    "spices": {"value": 30, "category": "luxury", "biomes": ["desert", "savanna"]},
+    "gems": {"value": 60, "category": "luxury", "biomes": ["mountain", "desert"]},
     
     # Medicine
-    "herbs": {"value": 8, "category": "medicine", "biomes": ["forest", "jungle", "swamp"]},
-    "potions": {"value": 30, "category": "medicine", "biomes": []},
+    "herbs": {"value": 6, "category": "medicine", "biomes": ["forest", "jungle", "swamp"]},
+    "potions": {"value": 25, "category": "medicine", "biomes": []},
     
-    # Weapons
-    "dagger": {"value": 15, "category": "weapon", "biomes": []},
-    "sword": {"value": 30, "category": "weapon", "biomes": []},
-    "axe": {"value": 25, "category": "weapon", "biomes": []},
-    "spear": {"value": 20, "category": "weapon", "biomes": []},
-    "bow": {"value": 25, "category": "weapon", "biomes": []},
-    "crossbow": {"value": 40, "category": "weapon", "biomes": []},
-    "mace": {"value": 28, "category": "weapon", "biomes": []},
+    # Weapons (balanced)
+    "dagger": {"value": 12, "category": "weapon", "biomes": []},
+    "sword": {"value": 25, "category": "weapon", "biomes": []},
+    "axe": {"value": 20, "category": "weapon", "biomes": []},
+    "spear": {"value": 15, "category": "weapon", "biomes": []},
+    "bow": {"value": 20, "category": "weapon", "biomes": []},
+    "crossbow": {"value": 35, "category": "weapon", "biomes": []},
+    "mace": {"value": 22, "category": "weapon", "biomes": []},
     
-    # Armor
-    "leather_armor": {"value": 20, "category": "armor", "biomes": []},
-    "chainmail": {"value": 50, "category": "armor", "biomes": []},
-    "plate_armor": {"value": 100, "category": "armor", "biomes": []},
-    "shield": {"value": 15, "category": "armor", "biomes": []},
-    "helm": {"value": 10, "category": "armor", "biomes": []},
-    "boots": {"value": 8, "category": "armor", "biomes": []},
+    # Armor (balanced)
+    "leather_armor": {"value": 18, "category": "armor", "biomes": []},
+    "chainmail": {"value": 40, "category": "armor", "biomes": []},
+    "plate_armor": {"value": 80, "category": "armor", "biomes": []},
+    "shield": {"value": 12, "category": "armor", "biomes": []},
+    "helm": {"value": 8, "category": "armor", "biomes": []},
+    "boots": {"value": 6, "category": "armor", "biomes": []},
 }
 
 

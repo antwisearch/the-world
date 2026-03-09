@@ -18,7 +18,7 @@ DISEASES = {
         "severity": 1,
         "symptoms": ["sneezing", "coughing"],
         "contagious": True,
-        "duration": 5,
+        "duration": 4,
         "mortality": 0.0,
     },
     "flu": {
@@ -26,40 +26,40 @@ DISEASES = {
         "severity": 2,
         "symptoms": ["fever", "aches", "fatigue"],
         "contagious": True,
-        "duration": 10,
-        "mortality": 0.05,
+        "duration": 7,
+        "mortality": 0.02,
     },
     "plague": {
         "name": "The Plague",
         "severity": 3,
         "symptoms": ["fever", "buboes", "delirium"],
         "contagious": True,
-        "duration": 14,
-        " mortality": 0.5,
+        "duration": 10,
+        "mortality": 0.25,
     },
     "food_poisoning": {
         "name": "Food Poisoning",
         "severity": 2,
         "symptoms": ["vomiting", "diarrhea"],
         "contagious": False,
-        "duration": 3,
-        "mortality": 0.02,
+        "duration": 2,
+        "mortality": 0.01,
     },
     "infection": {
         "name": "Infection",
         "severity": 2,
         "symptoms": ["swelling", "fever", "pain"],
         "contagious": False,
-        "duration": 7,
-        "mortality": 0.1,
+        "duration": 5,
+        "mortality": 0.05,
     },
     "wounds": {
         "name": "Wounds",
         "severity": 1,
         "symptoms": ["bleeding", "pain"],
         "contagious": False,
-        "duration": 5,
-        "mortality": 0.05,
+        "duration": 4,
+        "mortality": 0.02,
     },
 }
 
@@ -130,17 +130,17 @@ class DiseaseSystem:
                     if other == inf_agent or not other.alive:
                         continue
                     
-                    # Check distance
+                    # Check distance (reduced from 20)
                     dist = ((inf_agent.x - other.x)**2 + (inf_agent.y - other.y)**2) ** 0.5
-                    if dist > 20:  # Spread range
+                    if dist > 30:  # Increased from 20
                         continue
                     
                     # Check quarantine
                     if other.biography.name in self.quarantined_agents:
                         continue
                     
-                    # Random chance to infect (30% base)
-                    chance = 0.3 * disease_data['severity']
+                    # Random chance to infect (15% base, reduced from 30%)
+                    chance = 0.15 * disease_data['severity']
                     if random.random() < chance:
                         if self.infect(other, disease.type):
                             if world:

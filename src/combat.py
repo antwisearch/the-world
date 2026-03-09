@@ -77,22 +77,22 @@ def calculate_defense(armor: Dict[str, str]) -> int:
 
 def calculate_damage(attacker_skill: int, weapon: Optional[str], target_defense: int) -> float:
     """Calculate damage for an attack"""
-    base_damage = 10
+    base_damage = 5  # Reduced from 10
     
     # Weapon damage
     if weapon and weapon in WEAPONS:
-        base_damage = WEAPONS[weapon]['damage']
+        base_damage = WEAPONS[weapon]['damage'] * 0.7  # Reduce weapon damage by 30%
     
-    # Skill modifier (0-100 skill = 0.5x to 2x multiplier)
-    skill_multiplier = 0.5 + (attacker_skill / 100)
+    # Skill modifier (0-100 skill = 0.5x to 1.5x multiplier) - reduced from 2x
+    skill_multiplier = 0.5 + (attacker_skill / 200)  # Changed from /100
     
-    # Random variance (0.8 to 1.2)
-    variance = random.uniform(0.8, 1.2)
+    # Random variance (0.7 to 1.3) - more variance
+    variance = random.uniform(0.7, 1.3)
     
     damage = base_damage * skill_multiplier * variance
     
-    # Apply defense
-    damage = max(1, damage - target_defense)
+    # Apply defense (reduced effectiveness)
+    damage = max(1, damage - (target_defense * 0.5))  # Defense only 50% effective
     
     return round(damage, 1)
 
