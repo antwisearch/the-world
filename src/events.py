@@ -258,6 +258,183 @@ class Disaster(Event):
     
     @classmethod
     def apply(cls, world):
+        disaster, msg = random.choice(cls.DISASTERS)
+        world.log_event(f"🌋 {msg}")
+        
+        # Damage random buildings
+        for b in world.buildings:
+            if random.random() < 0.3:
+                world.buildings.remove(b)
+                world.log_event(f"🏚️ {b.type} was destroyed!")
+        
+        return {disaster: True}
+
+
+class Migration(Event):
+    """A group of migrants arrives"""
+    name = "migration"
+    
+    @classmethod
+    def apply(cls, world):
+        from src.agent import Agent
+        
+        # Check population - less likely if crowded
+        if len(world.agents) > 30:
+            if random.random() < 0.3:
+                world.log_event("🚫 Migration rejected - colony is full!")
+                return None
+        
+        # Number of migrants
+        num_migrants = random.randint(3, 8)
+        
+        migrants = []
+        for i in range(num_migrants):
+            migrant = Agent(
+                random.uniform(100, world.width - 100),
+                random.uniform(100, world.height - 100)
+            )
+            # New migrants are hopeful
+            migrant.needs['happiness'] = 80
+            migrants.append(migrant)
+        
+        world.agents.extend(migrants)
+        
+        jobs = ['farmer', 'builder', 'gatherer', 'hunter', 'miner', 'woodcutter']
+        job_counts = {}
+        for m in migrants:
+            m.job = random.choice(jobs)
+            job_counts[m.job] = job_counts.get(m.job, 0) + 1
+        
+        job_str = ", ".join([f"{j}:{c}" for j, c in job_counts.items()])
+        
+        world.log_event(f"👨‍👩‍👧‍👦 Migration arrived! {num_migrants} new settlers ({job_str})")
+        
+        return {'migration': num_migrants}
+
+
+class Discovery(Event):
+    """Discovery of ruins or resources"""
+    name = "discovery"
+    
+    DISCOVERIES = [
+        ("ancient_ruins", "🏛️ Ancient ruins discovered!", "gems"),
+        ("abandoned_mine", "⛏️ An abandoned mine found!", "ore"),
+        ("hidden_cave", "🕳️ A hidden cave revealed!", "stone"),
+        ("sacred_grove", "🌳 A sacred grove discovered!", "wood"),
+        ("gem_deposit", "💎 A gem deposit found!", "gems"),
+        ("gold_vein", "✨ A gold vein discovered!", "gold"),
+    ]
+    
+    @classmethod
+    def apply(cls, world):
+        discovery_type, msg, resource = random.choice(cls.DISCOVERIES)
+        
+        # Spawn resources at random location
+        x = random.uniform(200, world.width - 200)
+        y = random.uniform(200, world.height - 200)
+        
+        # Add resources
+        from src.resources import spawn_resource
+        for _ in range(random.randint(3, 10)):
+            spawn_resource(world, resource)
+        
+        world.log_event(f"{msg} {random.randint(3, 10)} {resource} added!")
+        
+        # Chance for artifact
+        if random.random() < 0.3:
+            if hasattr(world, 'artifacts'):
+                artifact = world.artifacts.generate()
+                if artifact:
+                    world.log_event(f"🏆 Artifact discovered: {artifact.name}!")
+        
+        return {discovery_type: True}
+
+
+class TradeCaravan(Event):
+    """Enhanced trade caravan with more goods"""
+    name = "trade_caravan"
+    
+    @classmethod
+    def apply(cls, world):
+        from src.trading import Trader, ITEMS
+        
+        # Create a trader
+        names = ["Ali", "Bakari", "Chen", "Dmitri", "Elena", "Fatima", "Giovanni"]
+        trader_name = f"{random.choice(names)}'s Caravan"
+        
+        trader = Trader(
+            id=f"trader_{random.randint(1000, 9999)}",
+            name=trader_name,
+            shop_type=random.choice(['general_store', 'blacksmith', 'trader']),
+            inventory={},
+            gold=random.randint(200, 500),
+            location=(random.uniform(100, world.width-100), random.uniform(100, world.height-100)),
+            arrival_day=world.history.year,
+            stay_days=random.randint(3, 7)
+        )
+        
+        # Stock with random items
+        items = list(ITEMS.keys())
+        for _ in range(random.randint(5, 10)):
+            item = random.choice(items)
+            if item in ITEMS:
+                trader.inventory[item] = random.randint(1, 5)
+        
+        # Add to trade manager
+        if hasattr(world, 'trade_manager'):
+            world.trade_manager.traders.append(trader)
+        
+        world.log_event(f"🐪 {trader_name} has arrived with goods!")
+        world.log_event(f"💰 Trading: {', '.join(trader.inventory.keys())}")
+        
+        return {'caravan': trader_name}
+
+
+class PlagueEvent(Event):
+    """Plague outbreak"""
+    name = "plague"
+    
+    @classmethod
+    def apply(cls, world):
+        if not hasattr(world, 'disease_system'):
+            world.log_event("🤒 A sickness spreads through the colony...")
+            return None
+        
+        # Trigger plague
+        severity = random.choice([1, 2, 2, 3])  # Weighted
+        result = world.disease_system.trigger_plague(world, severity)
+        
+        return {'plague': severity}
+
+
+class Festival(Event):
+    """A festival is held"""
+    name = "festival"
+    
+    FESTIVALS = [
+        ("Harvest Festival", "🌾"),
+        ("Midwinter Feast", "❄️"),
+        ("Founding Day", "🏠"),
+        ("Trade Fair", "💰"),
+    ]
+    
+    @classmethod
+    def apply(cls, world):
+        name, emoji = random.choice(cls.FESTIVALS)
+        
+        # Boost happiness
+        for agent in world.agents:
+            agent.needs['happiness'] = min(100, agent.needs['happiness'] + 20)
+        
+        # Chance for new trade connections
+        if random.random() < 0.3:
+            world.log_event(f"{emoji} {name}! Happiness increased! A trader was attracted!")
+            # Could spawn a trader
+        
+        world.log_event(f"{emoji} {name} is being celebrated!")
+        
+        return {'festival': name}
+    def apply(cls, world):
         name, desc = random.choice(cls.DISASTERS)
         
         # Random agents affected
@@ -285,6 +462,9 @@ EVENTS = [
     Attack,
     HeroicDeath,
     Disaster,
+    Migration,
+    Festival,
+    PlagueEvent,
 ]
 
 
