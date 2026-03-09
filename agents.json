@@ -1,0 +1,437 @@
+{
+  "0c62e272": {
+    "id": "0c62e272",
+    "name": "TestAgent",
+    "job": "farmer",
+    "created_at": "2026-03-09T09:02:05.501626",
+    "last_active": "2026-03-09T09:02:05.501626",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 692,
+      "wood": 214
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "e8d2be55": {
+    "id": "e8d2be55",
+    "name": "pasi",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:12:29.759916",
+    "last_active": "2026-03-09T09:12:29.759916",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 386,
+      "wood": 298
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "cfe78af9": {
+    "id": "cfe78af9",
+    "name": "pasi1",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:13:16.783201",
+    "last_active": "2026-03-09T09:13:16.783201",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 398,
+      "wood": 288
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "7f209761": {
+    "id": "7f209761",
+    "name": "Antwi",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:16:19.955358",
+    "last_active": "2026-03-09T09:16:19.955358",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 431,
+      "wood": 250
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 427
+  },
+  "682fe076": {
+    "id": "682fe076",
+    "name": "nakke",
+    "job": "miner",
+    "created_at": "2026-03-09T09:18:52.382882",
+    "last_active": "2026-03-09T09:18:52.382882",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 302,
+      "wood": 378,
+      "stone": 56
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 427
+  },
+  "d8a73a90": {
+    "id": "d8a73a90",
+    "name": "j",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:19:59.402604",
+    "last_active": "2026-03-09T09:19:59.402604",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 458,
+      "wood": 268
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "21905bde": {
+    "id": "21905bde",
+    "name": "ds",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:24:37.825018",
+    "last_active": "2026-03-09T09:24:37.825018",
+    "position": {
+      "x": 610,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 443,
+      "wood": 302,
+      "stone": 1
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 427
+  },
+  "f943f51e": {
+    "id": "f943f51e",
+    "name": "pasi4",
+    "job": "gatherer",
+    "created_at": "2026-03-09T09:25:24.938043",
+    "last_active": "2026-03-09T09:25:24.938043",
+    "position": {
+      "x": 600,
+      "y": 390
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 449,
+      "wood": 288
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 427
+  },
+  "2e19aa4c": {
+    "id": "2e19aa4c",
+    "name": "Thorin",
+    "job": "miner",
+    "created_at": "2026-03-09T09:30:36.829564",
+    "last_active": "2026-03-09T09:30:36.829564",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 299,
+      "wood": 320,
+      "stone": 61
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "6d6a00f9": {
+    "id": "6d6a00f9",
+    "name": "Elara",
+    "job": "farmer",
+    "created_at": "2026-03-09T09:30:36.837842",
+    "last_active": "2026-03-09T09:30:36.837842",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 689,
+      "wood": 184
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "c422f143": {
+    "id": "c422f143",
+    "name": "Marcus",
+    "job": "hunter",
+    "created_at": "2026-03-09T09:30:36.846323",
+    "last_active": "2026-03-09T09:30:36.846323",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 728,
+      "wood": 166
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  },
+  "30bc99e1": {
+    "id": "30bc99e1",
+    "name": "Zara",
+    "job": "trader",
+    "created_at": "2026-03-09T09:30:36.854369",
+    "last_active": "2026-03-09T09:30:36.854369",
+    "position": {
+      "x": 600,
+      "y": 400
+    },
+    "needs": {
+      "food": 80,
+      "water": 80,
+      "shelter": 50,
+      "happiness": 100
+    },
+    "skills": {
+      "gathering": 10,
+      "farming": 10,
+      "building": 10,
+      "combat": 10,
+      "trading": 10,
+      "healing": 10,
+      "teaching": 10,
+      "research": 10
+    },
+    "inventory": {
+      "food": 386,
+      "wood": 268
+    },
+    "is_player": true,
+    "is_alive": true,
+    "generation": 1,
+    "deaths": 0,
+    "total_actions": 424
+  }
+}

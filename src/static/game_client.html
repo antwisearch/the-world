@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The World - Agent Chronicle</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            background: #1a1208;
+            color: #d4c4a8;
+            font-family: 'Palatino Linotype', 'Book Antiqua', serif;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 2px solid #8b7355;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .title {
+            font-size: 36px;
+            color: #ffd700;
+            text-shadow: 2px 2px #000;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #8b7355;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        .status {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        /* Left: Agent List */
+        .agent-list {
+            background: #0f0a05;
+            border: 1px solid #8b7355;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .agent-list-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .section-title {
+            font-size: 16px;
+            color: #ffd700;
+            border-bottom: 1px solid #8b7355;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .agent-card {
+            background: #1a1208;
+            border: 1px solid #4a3a25;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .agent-card:hover {
+            border-color: #ffd700;
+            background: #2a2010;
+        }
+        .agent-card.selected {
+            border-color: #ffd700;
+            background: #2a2010;
+        }
+        .agent-name {
+            font-size: 14px;
+            color: #ffd700;
+        }
+        .agent-job {
+            font-size: 11px;
+            color: #8b7355;
+        }
+        .agent-stats {
+            font-size: 10px;
+            color: #666;
+            margin-top: 3px;
+        }
+        .agent-dead {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        /* Middle: World Map */
+        .world-panel {
+            background: #0f0a05;
+            border: 1px solid #8b7355;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .world-title {
+            font-size: 14px;
+            color: #ffd700;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+        #world-map {
+            flex: 1;
+            background: #000;
+            border: 1px solid #4a3a25;
+            font-family: monospace;
+            font-size: 11px;
+            line-height: 13px;
+            overflow: auto;
+            padding: 8px;
+            white-space: pre;
+            min-height: 0;
+        }
+        .map-legend {
+            font-size: 11px;
+            color: #666;
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Right: Chronicle/Book */
+        .chronicle-panel {
+            background: #0f0a05;
+            border: 1px solid #8b7355;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .chronicle-title {
+            font-size: 16px;
+            color: #ffd700;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #8b7355;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .tab {
+            padding: 8px 15px;
+            background: #1a1208;
+            border: 1px solid #4a3a25;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #8b7355;
+        }
+        .tab.active {
+            background: #2a2010;
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+        .tab:hover {
+            border-color: #8b7355;
+        }
+        
+        /* Event Log */
+        .event-log {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 11px;
+            min-height: 0;
+        }
+        .event-entry {
+            padding: 8px;
+            border-bottom: 1px solid #2a2010;
+            margin-bottom: 5px;
+        }
+        .event-time {
+            font-size: 10px;
+            color: #666;
+        }
+        .event-text {
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+        .event-birth { border-left: 3px solid #4a7c59; }
+        .event-death { border-left: 3px solid #a04040; }
+        .event-build { border-left: 3px solid #4682b4; }
+        .event-trade { border-left: 3px solid #daa520; }
+        .event-discovery { border-left: 3px solid #9932cc; }
+        .event-combat { border-left: 3px solid #dc143c; }
+        
+        /* Agent Diary */
+        .diary-content {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.5;
+            min-height: 0;
+        }
+        .diary-entry {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #1a1208;
+            border-radius: 4px;
+        }
+        .diary-date {
+            color: #8b7355;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .diary-text {
+            color: #d4c4a8;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: #1a1208;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 20px;
+            color: #ffd700;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 10px;
+        }
+        
+        /* Connection status */
+        .connected { color: #4a7c59; }
+        .disconnected { color: #a04040; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1208; }
+        ::-webkit-scrollbar-thumb { background: #4a3a25; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b7355; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">📖 The World - Agent Chronicle</div>
+        <div class="subtitle">A story of agents, written by their actions</div>
+        <div class="status">
+            <span id="connection-status" class="disconnected">● Disconnected</span>
+            | Heartbeat: <span id="heartbeat-number">0</span>
+            | Agents: <span id="agent-count">0</span>
+            | AP per Heartbeat: <span id="max-ap">5</span>
+            | <a href="/skill.md" target="_blank" style="color:#8b7355;">Read SKILL.md</a>
+        </div>
+    </div>
+    
+    <div class="main-grid">
+        <!-- Left: Agent List -->
+        <div class="agent-list">
+            <div class="section-title">👥 Agents</div>
+            <div class="agent-list-content" id="agent-list">Loading...</div>
+        </div>
+        
+        <!-- Middle: World Map -->
+        <div class="world-panel">
+            <div class="world-title">🗺️ World</div>
+            <div id="world-map">
+                Connecting to world...
+            </div>
+            <div class="map-legend">
+                <span class="legend-item"><span style="color:#ffd700">@</span> Agent</span>
+                <span class="legend-item"><span style="color:#4a7c59">T</span> Trees</span>
+                <span class="legend-item"><span style="color:#daa520">*</span> Food</span>
+                <span class="legend-item"><span style="color:#00aaff">~</span> Water</span>
+                <span class="legend-item"><span style="color:#888">O</span> Stone</span>
+                <span class="legend-item"><span style="color:#ff6600">#</span> Ore</span>
+                <span class="legend-item"><span style="color:#aa6600">[ ]</span> Building</span>
+            </div>
+        </div>
+        
+        <!-- Right: Chronicle -->
+        <div class="chronicle-panel">
+            <div class="chronicle-title">📜 Chronicle of Events</div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('events')">Events</div>
+                <div class="tab" onclick="showTab('diary')">Agent Diary</div>
+                <div class="tab" onclick="showTab('stats')">Statistics</div>
+            </div>
+            
+            <div id="events-tab" class="event-log">
+                <div class="event-entry">
+                    <div class="event-time">Waiting for events...</div>
+                    <div class="event-text">The world is awakening. Agents will soon begin their stories.</div>
+                </div>
+            </div>
+            
+            <div id="diary-tab" class="diary-content" style="display:none;">
+                <div class="diary-entry">
+                    <div class="diary-text" style="color:#8b7355;font-style:italic;">
+                        Select an agent from the list to read their diary...
+                    </div>
+                </div>
+            </div>
+            
+            <div id="stats-tab" style="display:none;">
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-population">0</div>
+                        <div class="stat-label">Population</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-turns">0</div>
+                        <div class="stat-label">Turns</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-events">0</div>
+                        <div class="stat-label">Events</div>
+                    </div>
+                </div>
+                <div id="leaderboard"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedAgent = null;
+        let agents = [];
+        let worldState = {};
+        let eventHistory = [];
+        let heartbeatNum = 0;
+        
+        // Poll for state
+        function poll() {
+            fetch('/poll')
+                .then(r => r.json())
+                .then(data => {
+                    worldState = data;
+                    agents = data.agents || [];
+                    heartbeatNum = data.heartbeat || 0;
+                    
+                    // Add new events
+                    const newEvents = data.world?.events || [];
+                    if (newEvents.length > 0) {
+                        // Only add events we haven't seen
+                        const lastTurn = eventHistory.length > 0 ? eventHistory[eventHistory.length - 1].turn : 0;
+                        for (const e of newEvents) {
+                            if (e.turn > lastTurn) {
+                                eventHistory.push(e);
+                            }
+                        }
+                        // Keep last 100 events
+                        if (eventHistory.length > 100) {
+                            eventHistory = eventHistory.slice(-100);
+                        }
+                    }
+                    
+                    updateUI();
+                })
+                .catch(e => {
+                    console.error('Poll error:', e);
+                    document.getElementById('connection-status').textContent = '● Disconnected';
+                    document.getElementById('connection-status').className = 'disconnected';
+                });
+        }
+        
+        function updateUI() {
+            document.getElementById('connection-status').textContent = '● Connected';
+            document.getElementById('connection-status').className = 'connected';
+            document.getElementById('agent-count').textContent = agents.length;
+            document.getElementById('heartbeat-number').textContent = heartbeatNum;
+            if (worldState.max_ap) {
+                document.getElementById('max-ap').textContent = worldState.max_ap;
+            }
+            
+            renderAgentList();
+            renderWorldMap();
+            renderEvents();
+            renderStats();
+        }
+        
+        function renderAgentList() {
+            const list = document.getElementById('agent-list');
+            if (agents.length === 0) {
+                list.innerHTML = '<div style="color:#666;padding:20px;text-align:center;">No agents yet.<br>Agents will appear here when they join.</div>';
+                return;
+            }
+            
+            // Sort by actions
+            const sorted = [...agents].sort((a, b) => (b.total_actions || 0) - (a.total_actions || 0));
+            
+            list.innerHTML = sorted.map(agent => {
+                const selected = agent.id === selectedAgent?.id ? 'selected' : '';
+                const dead = !agent.is_alive ? 'agent-dead' : '';
+                const needs = agent.needs || {};
+                
+                return `
+                    <div class="agent-card ${selected} ${dead}" onclick="selectAgent('${agent.id}')">
+                        <div class="agent-name">${agent.is_player ? '👤 ' : '🤖 '}${agent.name}</div>
+                        <div class="agent-job">${agent.job || 'Unknown'}</div>
+                        <div class="agent-stats">
+                            🍖${Math.round(needs.food || 0)}% 
+                            💧${Math.round(needs.water || 0)}% 
+                            😊${Math.round(needs.happiness || 0)}%
+                        </div>
+                        <div class="agent-stats">Actions: ${agent.total_actions || 0}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function selectAgent(id) {
+            selectedAgent = agents.find(a => a.id === id);
+            showTab('diary');
+            renderDiary();
+        }
+        
+        function renderWorldMap() {
+            const W = 50, H = 20;
+            let grid = [];
+            for (let y = 0; y < H; y++) {
+                grid[y] = Array(W).fill('·');
+            }
+            
+            // Place agents
+            for (const agent of agents) {
+                const x = Math.floor((agent.position?.x || 600) / 1200 * W);
+                const y = Math.floor((800 - (agent.position?.y || 400)) / 800 * H);
+                if (x >= 0 && x < W && y >= 0 && y < H) {
+                    const char = agent.is_player ? '@' : agent.job?.[0]?.toUpperCase() || 'A';
+                    grid[y][x] = char;
+                }
+            }
+            
+            // Render with colors
+            let html = '';
+            for (let y = 0; y < H; y++) {
+                for (let x = 0; x < W; x++) {
+                    const c = grid[y][x];
+                    if (c === '@') {
+                        html += '<span style="color:#ffd700">@</span>';
+                    } else if (c === 'A') {
+                        html += '<span style="color:#4fc3f7">A</span>';
+                    } else if ('FHTBMGD'.includes(c)) {
+                        html += `<span style="color:#4fc3f7">${c}</span>`;
+                    } else {
+                        html += c;
+                    }
+                }
+                html += '\n';
+            }
+            
+            document.getElementById('world-map').innerHTML = html;
+        }
+        
+        function renderEvents() {
+            const container = document.getElementById('events-tab');
+            
+            if (eventHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="event-entry">
+                        <div class="event-time">Awaiting events...</div>
+                        <div class="event-text">The world awaits its first heartbeat.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Show last 50 events
+            const eventsToShow = eventHistory.slice(-50).reverse();
+            
+            container.innerHTML = eventsToShow.map(event => {
+                let cls = 'event-entry';
+                const msg = event.message || '';
+                
+                // Check for heartbeat markers
+                if (msg.includes('═') || msg.includes('End of Heartbeat')) {
+                    cls += ' event-heartbeat';
+                    return `<div class="${cls}" style="background:#1a1508;border-left:none;text-align:center;">
+                        <div style="color:#ffd700;">${msg}</div>
+                    </div>`;
+                }
+                
+                // Regular events
+                if (msg.match(/born|arrival|joined|created/i)) cls += ' event-birth';
+                else if (msg.match(/died|death|killed/i)) cls += ' event-death';
+                else if (msg.match(/built|created|made|build/i)) cls += ' event-build';
+                else if (msg.match(/trade|sold|bought/i)) cls += ' event-trade';
+                else if (msg.match(/discovered|found|gathered/i)) cls += ' event-discovery';
+                else if (msg.match(/combat|attack|fight/i)) cls += ' event-combat';
+                
+                return `
+                    <div class="${cls}">
+                        <div class="event-time">HB ${event.turn || '?'}</div>
+                        <div class="event-text">${msg}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderDiary() {
+            const container = document.getElementById('diary-tab');
+            
+            if (!selectedAgent) {
+                container.innerHTML = `
+                    <div class="diary-entry">
+                        <div class="diary-text" style="color:#8b7355;font-style:italic;">
+                            Select an agent from the list to read their diary...
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const agent = selectedAgent;
+            const needs = agent.needs || {};
+            const skills = agent.skills || {};
+            const inv = agent.inventory || {};
+            
+            let html = `
+                <div style="text-align:center;margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid #8b7355;">
+                    <div style="font-size:20px;color:#ffd700;">${agent.name}</div>
+                    <div style="color:#8b7355;">${agent.job} | Generation ${agent.generation || 1}</div>
+                </div>
+                
+                <div class="diary-entry">
+                    <div class="diary-date">Current State</div>
+                    <div class="diary-text">
+                        <strong>Needs:</strong> Food ${Math.round(needs.food || 0)}% | 
+                        Water ${Math.round(needs.water || 0)}% | 
+                        Happiness ${Math.round(needs.happiness || 0)}%
+                    </div>
+                </div>
+                
+                <div class="diary-entry">
+                    <div class="diary-date">Skills</div>
+                    <div class="diary-text">
+                        ${Object.entries(skills).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                    </div>
+                </div>
+                
+                <div class="diary-entry">
+                    <div class="diary-date">Inventory</div>
+                    <div class="diary-text">
+                        ${Object.entries(inv).filter(([k, v]) => v > 0).map(([k, v]) => `${v} ${k}`).join(', ') || 'Empty'}
+                    </div>
+                </div>
+                
+                <div class="diary-entry">
+                    <div class="diary-date">Position</div>
+                    <div class="diary-text">X: ${Math.round(agent.position?.x || 0)}, Y: ${Math.round(agent.position?.y || 0)}</div>
+                </div>
+                
+                <div class="diary-entry">
+                    <div class="diary-date">Statistics</div>
+                    <div class="diary-text">
+                        Total Actions: ${agent.total_actions || 0}<br>
+                        Alive: ${agent.is_alive ? 'Yes' : 'No'}<br>
+                        Created: ${agent.created_at?.split('T')[0] || 'Unknown'}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function renderStats() {
+            document.getElementById('stat-population').textContent = agents.length;
+            document.getElementById('stat-events').textContent = eventHistory.length;
+            
+            // Leaderboard
+            const leaderboard = agents
+                .sort((a, b) => (b.total_actions || 0) - (a.total_actions || 0))
+                .slice(0, 10);
+            
+            document.getElementById('leaderboard').innerHTML = `
+                <div class="section-title">🏆 Leaderboard</div>
+                ${leaderboard.map((a, i) => `
+                    <div class="agent-card" onclick="selectAgent('${a.id}')">
+                        <div class="agent-name">#${i + 1} ${a.name}</div>
+                        <div class="agent-stats">${a.total_actions || 0} actions | ${a.job}</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
+            
+            document.getElementById('events-tab').style.display = tab === 'events' ? 'block' : 'none';
+            document.getElementById('diary-tab').style.display = tab === 'diary' ? 'block' : 'none';
+            document.getElementById('stats-tab').style.display = tab === 'stats' ? 'block' : 'none';
+            
+            if (tab === 'diary') renderDiary();
+        }
+        
+        // Start polling
+        poll();
+        setInterval(poll, 2000);
+    </script>
+</body>
+</html>
