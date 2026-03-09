@@ -46,6 +46,23 @@ ITEMS = {
     # Medicine
     "herbs": {"value": 8, "category": "medicine", "biomes": ["forest", "jungle", "swamp"]},
     "potions": {"value": 30, "category": "medicine", "biomes": []},
+    
+    # Weapons
+    "dagger": {"value": 15, "category": "weapon", "biomes": []},
+    "sword": {"value": 30, "category": "weapon", "biomes": []},
+    "axe": {"value": 25, "category": "weapon", "biomes": []},
+    "spear": {"value": 20, "category": "weapon", "biomes": []},
+    "bow": {"value": 25, "category": "weapon", "biomes": []},
+    "crossbow": {"value": 40, "category": "weapon", "biomes": []},
+    "mace": {"value": 28, "category": "weapon", "biomes": []},
+    
+    # Armor
+    "leather_armor": {"value": 20, "category": "armor", "biomes": []},
+    "chainmail": {"value": 50, "category": "armor", "biomes": []},
+    "plate_armor": {"value": 100, "category": "armor", "biomes": []},
+    "shield": {"value": 15, "category": "armor", "biomes": []},
+    "helm": {"value": 10, "category": "armor", "biomes": []},
+    "boots": {"value": 8, "category": "armor", "biomes": []},
 }
 
 
@@ -60,8 +77,8 @@ SHOP_TYPES = {
     },
     "blacksmith": {
         "name": "Blacksmith",
-        "sells": ["tool", "weapon"],
-        "buys": ["tool", "weapon", "material"],
+        "sells": ["tool", "weapon", "armor"],
+        "buys": ["tool", "weapon", "armor", "material"],
         "markup": 1.5,
         "markdown": 0.6
     },
