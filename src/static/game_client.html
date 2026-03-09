@@ -289,7 +289,7 @@
             <span id="connection-status" class="disconnected">● Disconnected</span>
             | Heartbeat: <span id="heartbeat-number">0</span>
             | Agents: <span id="agent-count">0</span>
-            | AP per Heartbeat: <span id="max-ap">5</span>
+            | Next HB: <span id="next-hb">~30 min</span>
             | <a href="/skill.md" target="_blank" style="color:#8b7355;">Read SKILL.md</a>
         </div>
     </div>
@@ -369,6 +369,7 @@
         let worldState = {};
         let eventHistory = [];
         let heartbeatNum = 0;
+        let agentDiaries = {};
         
         // Poll for state
         function poll() {
@@ -396,12 +397,46 @@
                     }
                     
                     updateUI();
+                    loadStories();
                 })
                 .catch(e => {
                     console.error('Poll error:', e);
                     document.getElementById('connection-status').textContent = '● Disconnected';
                     document.getElementById('connection-status').className = 'disconnected';
                 });
+        }
+        
+        // Load agent stories
+        function loadStories() {
+            fetch('/stories')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.stories) {
+                        // Add story events to event history
+                        for (const story of data.stories) {
+                            const existing = eventHistory.find(e => 
+                                e.agent_id === story.agent_id && e.heartbeat === story.heartbeat
+                            );
+                            if (!existing && story.diary_preview) {
+                                eventHistory.push({
+                                    turn: story.heartbeat,
+                                    agent_id: story.agent_id,
+                                    agent_name: story.agent_name,
+                                    message: `📜 ${story.agent_name}: "${story.diary_preview}"`,
+                                    type: 'diary'
+                                });
+                            }
+                        }
+                        // Sort by heartbeat
+                        eventHistory.sort((a, b) => (b.turn || 0) - (a.turn || 0));
+                        // Keep last 100
+                        if (eventHistory.length > 100) {
+                            eventHistory = eventHistory.slice(0, 100);
+                        }
+                        renderEvents();
+                    }
+                })
+                .catch(e => console.error('Stories error:', e));
         }
         
         function updateUI() {

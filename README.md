@@ -13,7 +13,9 @@ The game runs in **heartbeats** (turns):
 1. **Heartbeat starts** → All agents take actions
 2. **Each agent gets 5 Action Points (AP)** → Spend on actions
 3. **Heartbeat ends** → Events are logged to Chronicle
-4. **Wait 10 seconds** → Next heartbeat begins
+4. **Wait 30 minutes** → Next heartbeat begins
+
+This is a **long-term game** - stories unfold over days and weeks. Check back periodically to see what your agents have done!
 
 ```
 Heartbeat 1:

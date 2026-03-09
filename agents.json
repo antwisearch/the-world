@@ -26,14 +26,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 692,
+      "food": 917,
       "wood": 214
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "e8d2be55": {
     "id": "e8d2be55",
@@ -62,14 +62,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 386,
-      "wood": 298
+      "food": 464,
+      "wood": 342
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "cfe78af9": {
     "id": "cfe78af9",
@@ -98,14 +98,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 398,
-      "wood": 288
+      "food": 512,
+      "wood": 324
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "7f209761": {
     "id": "7f209761",
@@ -134,14 +134,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 431,
-      "wood": 250
+      "food": 497,
+      "wood": 294
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 427
+    "total_actions": 502
   },
   "682fe076": {
     "id": "682fe076",
@@ -171,14 +171,14 @@
     },
     "inventory": {
       "food": 302,
-      "wood": 378,
-      "stone": 56
+      "wood": 460,
+      "stone": 90
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 427
+    "total_actions": 502
   },
   "d8a73a90": {
     "id": "d8a73a90",
@@ -207,14 +207,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 458,
-      "wood": 268
+      "food": 545,
+      "wood": 330
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "21905bde": {
     "id": "21905bde",
@@ -243,15 +243,15 @@
       "research": 10
     },
     "inventory": {
-      "food": 443,
-      "wood": 302,
+      "food": 524,
+      "wood": 344,
       "stone": 1
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 427
+    "total_actions": 502
   },
   "f943f51e": {
     "id": "f943f51e",
@@ -280,14 +280,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 449,
-      "wood": 288
+      "food": 512,
+      "wood": 334
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 427
+    "total_actions": 502
   },
   "2e19aa4c": {
     "id": "2e19aa4c",
@@ -317,14 +317,14 @@
     },
     "inventory": {
       "food": 299,
-      "wood": 320,
-      "stone": 61
+      "wood": 396,
+      "stone": 98
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "6d6a00f9": {
     "id": "6d6a00f9",
@@ -353,14 +353,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 689,
+      "food": 914,
       "wood": 184
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "c422f143": {
     "id": "c422f143",
@@ -389,14 +389,14 @@
       "research": 10
     },
     "inventory": {
-      "food": 728,
+      "food": 953,
       "wood": 166
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   },
   "30bc99e1": {
     "id": "30bc99e1",
@@ -425,13 +425,13 @@
       "research": 10
     },
     "inventory": {
-      "food": 386,
-      "wood": 268
+      "food": 464,
+      "wood": 302
     },
     "is_player": true,
     "is_alive": true,
     "generation": 1,
     "deaths": 0,
-    "total_actions": 424
+    "total_actions": 499
   }
 }

@@ -10,6 +10,7 @@ import asyncio
 
 from src.agent_registry import get_registry
 from src.game_session import get_game_manager, TURN_TIME_LIMIT, MAX_AP, ACTIONS
+from src.story_archive import get_archive
 
 
 # Create FastAPI app
@@ -25,16 +26,86 @@ game_manager = None
 
 # Background AI game loop
 game_events = []
-HEARTBEAT_INTERVAL = 10  # Seconds between heartbeats
+HEARTBEAT_INTERVAL = 1800  # 30 minutes between heartbeats (long-term game)
 MAX_AP = 5  # Action points per heartbeat
 heartbeat_number = 0
+story_archive = None
+
+def generate_diary(agent, actions: list, results: list) -> str:
+    """Generate a diary entry for an agent based on their actions"""
+    
+    name = agent.name
+    job = agent.job
+    position = agent.position
+    
+    # Build action summary
+    action_summary = []
+    for r in results:
+        if r.get("success"):
+            action = r.get("action", "unknown")
+            if action.startswith("gather_"):
+                resource = action.replace("gather_", "")
+                action_summary.append(f"gathered some {resource}")
+            elif action == "rest":
+                action_summary.append("took a moment to rest")
+            elif action.startswith("move_"):
+                direction = action.replace("move_", "")
+                action_summary.append(f"traveled {direction}")
+            elif action.startswith("set_job_"):
+                new_job = action.replace("set_job_", "")
+                action_summary.append(f"became a {new_job}")
+            else:
+                action_summary.append(action.replace("_", " "))
+    
+    # Generate diary based on actions and job
+    import random
+    
+    templates = [
+        f"Another heartbeat passes. I {', '.join(action_summary[:3])}. ",
+        f"The day's work is done. I {', '.join(action_summary[:2])}. ",
+        f"I spent this heartbeat {', '.join(action_summary[:3])}. ",
+    ]
+    
+    base = random.choice(templates)
+    
+    # Add job-specific thoughts
+    job_thoughts = {
+        "farmer": "The soil needs tending. Every seed planted is hope for tomorrow.",
+        "hunter": "The forest holds many secrets. Today I seek, tomorrow I might find.",
+        "miner": "Deep in the earth, treasures await those patient enough to dig.",
+        "builder": "Stone by stone, we raise structures that will outlast us all.",
+        "gatherer": "The world provides for those who take the time to look.",
+        "trader": "Value is in the eye of the beholder. Everything can be traded.",
+    }
+    
+    thought = job_thoughts.get(job, "Each action brings me closer to my goals.")
+    
+    # Add needs-based thoughts
+    needs = agent.needs or {}
+    if needs.get("food", 100) < 50:
+        base += " My stomach growls with hunger. "
+    if needs.get("happiness", 100) < 30:
+        base += " I feel weary in spirit. "
+    
+    # Add inventory thoughts
+    inventory = agent.inventory or {}
+    if inventory.get("wood", 0) >= 8:
+        base += " My collection of wood grows. "
+    if inventory.get("food", 0) >= 10:
+        base += " I have gathered plenty of food. "
+    
+    return base + thought
+
 
 async def ai_game_loop():
     """AI agents take turns automatically - one heartbeat at a time"""
     import asyncio
     import random
     
-    global heartbeat_number
+    global heartbeat_number, story_archive
+    
+    # Initialize story archive
+    story_archive = get_archive("stories")
     
     while True:
         await asyncio.sleep(HEARTBEAT_INTERVAL)
@@ -42,6 +113,7 @@ async def ai_game_loop():
         
         # Get all agents
         all_agents = list(registry.agents.values())
+        player_agents = [a for a in all_agents if a.is_player and a.is_alive]
         alive_agents = [a for a in all_agents if a.is_alive]
         
         if not alive_agents:
@@ -59,7 +131,7 @@ async def ai_game_loop():
             actions = []
             ap = MAX_AP
             
-            # Simple AI: Check needs and act
+            # Determine actions based on needs and job
             needs = agent.needs or {}
             inventory = agent.inventory or {}
             
@@ -77,28 +149,46 @@ async def ai_game_loop():
                 actions.append({"action": "rest"})
                 ap -= 1
             
-            # Priority 2: Build resources
+            # Priority 2: Job-based actions
             while ap > 0:
-                # Strategic choices based on job
                 if agent.job == "farmer":
                     actions.append({"action": "gather_food"})
                 elif agent.job == "miner":
                     actions.append({"action": random.choice(["gather_stone", "gather_wood"])})
                 elif agent.job == "hunter":
                     actions.append({"action": "gather_food"})
+                elif agent.job == "trader":
+                    actions.append({"action": random.choice(["gather_wood", "gather_food"])})
                 else:
                     actions.append({"action": random.choice(["gather_wood", "gather_food", "rest"])})
                 ap -= 1
             
-            # Execute actions and log
+            # Execute actions
             results = execute_actions_sync(agent, actions)
             
             # Log actions
-            action_summary = ", ".join([r["action"] for r in results if r.get("success")])
-            if action_summary:
+            action_names = [r["action"] for r in results if r.get("success")]
+            if action_names:
                 game_events.append({
                     "turn": heartbeat_number,
-                    "message": f"{agent.name}: {action_summary}"
+                    "message": f"{agent.name}: {', '.join(action_names)}"
+                })
+            
+            # Write diary entry (for player agents - LLM agents)
+            if agent.is_player:
+                diary = generate_diary(agent, actions, results)
+                story_archive.save_diary(
+                    agent_id=agent.id,
+                    agent_name=agent.name,
+                    heartbeat=heartbeat_number,
+                    actions=actions,
+                    diary=diary,
+                    position=agent.position,
+                    mood="neutral"
+                )
+                game_events.append({
+                    "turn": heartbeat_number,
+                    "message": f"📜 {agent.name} wrote in their diary."
                 })
         
         # Heartbeat end
@@ -111,7 +201,7 @@ async def ai_game_loop():
         if len(game_events) > 100:
             game_events[:] = game_events[-100:]
         
-        print(f"[Heartbeat {heartbeat_number}] Complete. Events: {len(game_events)}")
+        print(f"[Heartbeat {heartbeat_number}] Complete. Stories saved.")
 
 
 @app.on_event("startup")
@@ -365,6 +455,27 @@ async def take_actions(agent_id: str, data: dict):
         "success": True,
         "agent": agent.to_dict(),
         "results": results
+    }
+
+
+@app.get("/diaries/{agent_id}")
+async def get_agent_diaries(agent_id: str, limit: int = 50):
+    """Get all diaries for an agent"""
+    diaries = story_archive.get_all_diaries(agent_id, limit)
+    return {
+        "success": True,
+        "agent_id": agent_id,
+        "diaries": diaries
+    }
+
+
+@app.get("/stories")
+async def get_all_stories():
+    """Get recent stories from all agents"""
+    events = story_archive.get_recent_events(100)
+    return {
+        "success": True,
+        "stories": events
     }
 
 
