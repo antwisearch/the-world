@@ -58,12 +58,24 @@ class Ore(ResourceType):
         agent.inventory['ore'] += resource.get('amount', 1)
 
 
+class Herbs(ResourceType):
+    """Medical herbs for healers"""
+    name = "herbs"
+    symbol = "+"
+    color = "#32CD32"
+    
+    @classmethod
+    def on_gather(cls, agent, resource):
+        agent.inventory['herbs'] = agent.inventory.get('herbs', 0) + resource.get('amount', 3)
+
+
 # Resource registry
 RESOURCES = {
     'food': Food,
     'wood': Wood,
     'stone': Stone,
-    'ore': Ore
+    'ore': Ore,
+    'herbs': Herbs
 }
 
 
@@ -74,13 +86,14 @@ def get_resource(name):
 def spawn_resource(world, rtype=None):
     """Spawn a random resource"""
     if rtype is None:
-        rtype = random.choice(['food', 'food', 'food', 'wood', 'wood', 'stone', 'ore'])
+        rtype = random.choice(['food', 'food', 'food', 'wood', 'wood', 'stone', 'ore', 'herbs'])
     
     amounts = {
         'food': (5, 15),
         'wood': (3, 10),
         'stone': (2, 8),
-        'ore': (1, 5)
+        'ore': (1, 5),
+        'herbs': (3, 8)
     }
     
     min_a, max_a = amounts.get(rtype, (1, 5))
@@ -110,3 +123,7 @@ def spawn_initial_resources(world):
     # Ore
     for _ in range(10):
         world.resources.append(spawn_resource(world, 'ore'))
+    
+    # Herbs (for healers)
+    for _ in range(8):
+        world.resources.append(spawn_resource(world, 'herbs'))

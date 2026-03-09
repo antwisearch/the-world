@@ -53,7 +53,12 @@ class Agent:
             'building': random.randint(10, 30),
             'combat': random.randint(10, 30),
             'farming': random.randint(10, 30),
-            'trading': random.randint(10, 30)
+            'trading': random.randint(10, 30),
+            # New job skills
+            'teaching': random.randint(10, 30),
+            'healing': random.randint(10, 30),
+            'research': random.randint(10, 30),
+            'diplomacy': random.randint(10, 30)
         }
         
         # Inventory
@@ -62,7 +67,8 @@ class Agent:
             'wood': 0,
             'stone': 0,
             'ore': 0,
-            'goods': 0
+            'goods': 0,
+            'herbs': 0
         }
         
         # Home (building)
