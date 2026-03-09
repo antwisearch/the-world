@@ -108,6 +108,26 @@
         .c-shelter { color: #aa6600; }
         .c-farm { color: #22cc22; }
         .c-workshop { color: #aa44aa; }
+        .c-agent-teacher { color: #ff88ff; }
+        .c-agent-healer { color: #88ff88; }
+        .c-agent-researcher { color: #8888ff; }
+        .c-agent-diplomat { color: #ffff88; }
+        .c-agent-woodcutter { color: #00aa00; }
+        .c-agent-miner { color: #aaaaaa; }
+        .c-agent-fisher { color: #00ffff; }
+        
+        /* Need bars */
+        .need-bar { display: inline-block; height: 6px; width: 30px; background: #222; margin-right: 3px; }
+        .need-bar-fill { height: 100%; }
+        
+        /* Mini-map */
+        .minimap { 
+            background: #111; 
+            border: 1px solid #333; 
+            padding: 2px;
+            margin-top: 5px;
+        }
+        .minimap-row { font-size: 6px; line-height: 6px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -175,6 +195,10 @@
                 <div class="stat-value" id="biome">unknown</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">MINI-MAP</div>
+                <div class="minimap" id="minimap"></div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">WEALTH</div>
                 <div class="stat-value" id="wealth">0</div>
             </div>
@@ -187,14 +211,18 @@
                 <div><span class="c-agent">@</span> = dwarf <span class="c-agent-hunter">h</span> = hunter</div>
                 <div><span class="c-agent-builder">b</span> = builder <span class="c-agent-farmer">f</span> = farmer</div>
                 <div><span class="c-agent-trader">t</span> = trader <span class="c-agent-guard">G</span> = guard</div>
+                <div><span class="c-agent-gatherer">g</span> = gatherer <span class="c-agent-woodcutter">w</span> = woodcutter</div>
+                <div><span class="c-agent-miner">m</span> = miner <span class="c-agent-fisher">F</span> = fisher</div>
+                <div><span class="c-agent-teacher">T</span> = teacher <span class="c-agent-healer">+</span> = healer</div>
+                <div><span class="c-agent-researcher">R</span> = researcher <span class="c-agent-diplomat">D</span> = diplomat</div>
                 <div><span class="c-food">*</span> = food <span class="c-tree">T</span> = tree</div>
                 <div><span class="c-stone">O</span> = stone <span class="c-ore">#</span> = ore</div>
                 <div><span class="c-water">~</span> = water <span class="c-shelter">[#]</span> = shelter</div>
                 <div class="legend-title" style="margin-top:8px">BIOMES</div>
                 <div><span style="color:#00ff00">G</span> = grassland</div>
                 <div><span style="color:#006400">F</span> = forest <span style="color:#8B4513">D</span> = desert</div>
-                <div><span style="color:#4169e1">J</span> = jungle <span style="color:#add8e6">T</span> = tundra</div>
-                <div><span style="color:#f0f8ff">S</span> = snow <span style="color:#556b2f">W</span> = swamp</div>
+                <div><span style="color:#4169e1">J</span> = jungle <span style="color:#add8e6">U</span> = tundra</div>
+                <div><span style="color:#f0f8ff">S</span> = snow <span style="color:#556b2f">W</span> = swamp <span style="color:#daa520">V</span> = savanna</div>
             </div>
         </div>
     </div>
@@ -280,18 +308,88 @@
             const economy = world.economy || {};
             document.getElementById('wealth').textContent = economy.total_wealth || 0;
             
-            // Agent list with names
+            // Mini-map (20x10)
+            const minimap = document.getElementById('minimap');
+            const MW = 20, MH = 10;
+            let mm = Array(MH).fill().map(() => Array(MW).fill('.'));
+            let mmColors = Array(MH).fill().map(() => Array(MW).fill('#222'));
+            
+            // Scale world coords to minimap
+            const mmx = x => Math.floor(x / 1200 * MW);
+            const mmy = y => Math.floor((800 - y) / 800 * MH);
+            
+            // Water
+            water.forEach(w => {
+                for (let dy = -2; dy <= 2; dy++) {
+                    for (let dx = -4; dx <= 4; dx++) {
+                        const sx = mmx(w.x) + dx;
+                        const sy = mmy(w.y) + dy;
+                        if (sx >= 0 && sx < MW && sy >= 0 && sy < MH) {
+                            mm[sy][sx] = '~';
+                            mmColors[sy][sx] = '#0066cc';
+                        }
+                    }
+                }
+            });
+            
+            // Resources
+            resources.filter(r => r.type === 'wood').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = 'T'; mmColors[sy][sx] = '#00aa00'; } });
+            resources.filter(r => r.type === 'ore').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = '#'; mmColors[sy][sx] = '#ff6600'; } });
+            resources.filter(r => r.type === 'stone').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = 'O'; mmColors[sy][sx] = '#666'; } });
+            resources.filter(r => r.type === 'food').forEach(r => { const sx = mmx(r.x), sy = mmy(r.y); if (sx>=0&&sx<MW&&sy>=0&&sy<MH) { mm[sy][sx] = '*'; mmColors[sy][sx] = '#ffaa00'; } });
+            
+            // Buildings
+            buildings.forEach(b => {
+                const sx = mmx(b.x), sy = mmy(b.y);
+                if (sx>=0&&sx<MW&&sy>=0&&sy<MH) {
+                    const chars = {'shelter': '#', 'farm': '+', 'workshop': '%', 'shop': '$'};
+                    mm[sy][sx] = chars[b.type] || 'B';
+                    mmColors[sy][sx] = '#aa6600';
+                }
+            });
+            
+            // Agents
+            agents.forEach(a => {
+                const sx = mmx(a.position.x), sy = mmy(a.position.y);
+                if (sx>=0&&sx<MW&&sy>=0&&sy<MH) {
+                    mm[sy][sx] = '@';
+                    mmColors[sy][sx] = '#ff66ff';
+                }
+            });
+            
+            // Render minimap
+            let mmHtml = '';
+            for (let y = 0; y < MH; y++) {
+                mmHtml += '<div class="minimap-row">';
+                for (let x = 0; x < MW; x++) {
+                    mmHtml += `<span style="color:${mmColors[y][x]}">${mm[y][x]}</span>`;
+                }
+                mmHtml += '</div>';
+            }
+            minimap.innerHTML = mmHtml;
+            
+            // Agent list with names and need bars
             const agentsList = document.getElementById('agents');
-            const agentsHtml = agents.map(a => {
+            const agentsHtml = agents.slice(0, 15).map(a => {
                 const name = a.name || 'Unknown';
-                const shortName = name.split(' ')[0].substring(0, 10);
+                const shortName = name.split(' ')[0].substring(0, 8);
                 const job = a.job ? a.job[0].toUpperCase() : '?';
-                const hap = a.needs?.happiness || 0;
-                const hapColor = hap > 50 ? '#0a0' : hap < 30 ? '#a00' : '#888';
+                
+                // Needs
+                const needs = a.needs || {};
+                const food = needs.food || 0;
+                const water = needs.water || 0;
+                const shelter = needs.shelter || 0;
+                const happiness = needs.happiness || 0;
+                
+                const getBar = (val) => {
+                    const color = val > 50 ? '#0a0' : val > 25 ? '#aa0' : '#a00';
+                    return `<span class="need-bar"><span class="need-bar-fill" style="width:${val}%;background:${color}"></span></span>`;
+                };
+                
                 return `<div style="font-size:8px;margin:2px 0;">
-                    <span style="color:#ff66ff">${job}</span> 
-                    ${shortName}
-                    <span style="color:${hapColor}">${hap.toFixed(0)}%</span>
+                    <span style="color:#ff66ff">${job}</span> ${shortName}
+                    <span style="color:#888">${getBar(food)}${getBar(water)}</span>
                 </div>`;
             }).join('');
             agentsList.innerHTML = agentsHtml;
@@ -445,22 +543,37 @@
                 'farmer': 'c-agent-farmer',
                 'trader': 'c-agent-trader',
                 'guard': 'c-agent-guard',
-                'gatherer': 'c-agent-gatherer'
+                'gatherer': 'c-agent-gatherer',
+                'teacher': 'c-agent-teacher',
+                'healer': 'c-agent-healer',
+                'researcher': 'c-agent-researcher',
+                'diplomat': 'c-agent-diplomat',
+                'woodcutter': 'c-agent-woodcutter',
+                'miner': 'c-agent-miner',
+                'fisher': 'c-agent-fisher'
+            };
+            
+            const agentChars = {
+                'hunter': 'h',
+                'builder': 'b', 
+                'farmer': 'f',
+                'trader': 't',
+                'guard': 'G',
+                'gatherer': 'g',
+                'teacher': 'T',
+                'healer': '+',
+                'researcher': 'R',
+                'diplomat': 'D',
+                'woodcutter': 'w',
+                'miner': 'm',
+                'fisher': 'F'
             };
             
             agents.forEach(a => {
                 const sx = wx(a.position.x);
                 const sy = wy(a.position.y);
                 if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                    const chars = {
-                        'hunter': 'h',
-                        'builder': 'b', 
-                        'farmer': 'f',
-                        'trader': 't',
-                        'guard': 'G',
-                        'gatherer': 'g'
-                    };
-                    g[sy][sx] = chars[a.job] || '@';
+                    g[sy][sx] = agentChars[a.job] || '@';
                     colors[sy][sx] = agentColors[a.job] || 'c-agent';
                 }
             });
